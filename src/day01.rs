@@ -1,7 +1,14 @@
 use super::day::Day;
-use itertools::izip;
 
-pub struct Day01 {}
+pub struct Day01;
+
+fn convoluted_increases(values: &[i32], window_size: usize) -> usize {
+    values
+        .iter()
+        .zip(values[window_size..].iter())
+        .filter(|(curr, next)| next > curr)
+        .count()
+}
 
 impl Day for Day01 {
     type Input = Vec<i32>;
@@ -14,16 +21,11 @@ impl Day for Day01 {
     }
 
     fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String) {
-        let deltas = izip!(input.iter(), input.iter().skip(1)).map(|(a, b)| b - a);
-        let increases = deltas.filter(|&d| d > 0).count();
+        let increases = convoluted_increases(&input, 1);
         (input, increases.to_string())
     }
 
     fn solve_part2(input: Self::ProcessedInput) -> String {
-        let windows = izip!(input.iter(), input.iter().skip(1), input.iter().skip(2));
-        let sums: Vec<_> = windows.map(|(a, b, c)| a + b + c).collect();
-        let deltas = izip!(sums.iter(), sums.iter().skip(1)).map(|(a, b)| b - a);
-        let increases = deltas.filter(|&d| d > 0).count();
-        increases.to_string()
+        convoluted_increases(&input, 3).to_string()
     }
 }
