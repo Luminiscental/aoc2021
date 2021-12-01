@@ -1,33 +1,46 @@
+use paste::paste;
 use std::env;
 
 mod day;
 mod day01;
+mod day02;
 
 use day::Day;
 use day01::Day01;
+use day02::Day02;
 
 macro_rules! solve {
-    ($day:ident) => {{
-        match $day::get_input() {
-            Ok(input) => $day::solve_and_print(input),
-            Err(err) => eprintln!("{}", err),
+    ($day:literal) => {{
+        paste! {
+            match [<Day $day>]::get_input() {
+                Ok(input) => [<Day $day>]::solve_and_print(input),
+                Err(err) => eprintln!("{}", err),
+            }
         }
     }};
-    ($day:ident, $($days:ident),+) => {{
+    ($day:literal, $($days:literal),+) => {{
         solve!($day);
-        solve!($days)
-    }};
+        solve!($($days),+)
+    }}
+}
+
+macro_rules! match_days {
+    ($day_string:ident, $($days:literal),+) => {{
+        match $day_string {
+            "all" => solve!($($days),+),
+            day => match day.parse::<usize>() {
+                Err(err) => eprintln!("Expected day number (or \"all\") as argument ({})", err),
+                $(Ok($days) => solve!($days)),+,
+                Ok(n) if (1..=25).contains(&n) => todo!(),
+                Ok(_) => eprintln!("That's not a day of advent!"),
+            }
+        }
+    }}
 }
 
 fn main() {
     match env::args().nth(1).as_deref() {
-        None => solve!(Day01), // latest
-        Some("all") => solve!(Day01),
-        Some(day) => match day.parse::<usize>() {
-            Err(err) => eprintln!("Expected day number (or \"all\") as argument ({})", err),
-            Ok(1) => solve!(Day01),
-            Ok(n) if (1..=25).contains(&n) => todo!(),
-            Ok(_) => eprintln!("That's not a day of advent!",),
-        },
+        None => solve!(02), // latest
+        Some(day) => match_days!(day, 01, 02),
     }
 }
