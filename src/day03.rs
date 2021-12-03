@@ -1,17 +1,8 @@
-use super::day::Day;
-
-use std::ops::Not;
+use super::{day::Day, util};
 
 fn most_common_bit(values: &[usize], pos: usize) -> usize {
-    values
-        .iter()
-        .copied()
-        .map(|n| (n >> pos) & 1)
-        .map(|b| 2 * (b as i32) - 1)
-        .sum::<i32>()
-        .is_negative()
-        .not()
-        .into()
+    let ones = values.iter().filter(|&n| (n >> pos) & 1 != 0).count();
+    (2 * ones >= values.len()).into()
 }
 
 fn bit_filter(
@@ -49,23 +40,15 @@ impl Day for Day03 {
 
     fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String) {
         let (width, values) = input;
-        let gamma = (0..width)
-            .map(|n| most_common_bit(&values, n))
-            .zip(itertools::iterate(1, |i| 2 * i))
-            .map(|p| p.0 * p.1)
-            .sum::<usize>();
+        let gamma = util::unradix((0..width).map(|n| most_common_bit(&values, n)), 2);
         let epsilon = (!gamma) & ((1 << width) - 1);
         ((width, values), (gamma * epsilon).to_string())
     }
 
     fn solve_part2(input: Self::ProcessedInput) -> String {
         let (width, values) = input;
-        let generator = bit_filter(width, &values, |n, candidates| {
-            most_common_bit(candidates, n)
-        });
-        let scrubber = bit_filter(width, &values, |n, candidates| {
-            1 - most_common_bit(candidates, n)
-        });
+        let generator = bit_filter(width, &values, |n, c| most_common_bit(c, n));
+        let scrubber = bit_filter(width, &values, |n, c| 1 - most_common_bit(c, n));
         (generator * scrubber).to_string()
     }
 }
