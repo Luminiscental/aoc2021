@@ -4,10 +4,12 @@ use std::env;
 mod day;
 mod day01;
 mod day02;
+mod day03;
 
 use day::Day;
 use day01::Day01;
 use day02::Day02;
+use day03::Day03;
 
 macro_rules! solve {
     ($day:literal) => {{
@@ -40,7 +42,7 @@ macro_rules! match_days {
 
 fn main() {
     match env::args().nth(1).as_deref() {
-        None => solve!(02), // latest
-        Some(day) => match_days!(day, 01, 02),
+        None => solve!(03), // latest
+        Some(day) => match_days!(day, 01, 02, 03),
     }
 }
