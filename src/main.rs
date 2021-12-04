@@ -1,3 +1,5 @@
+#![feature(min_type_alias_impl_trait)]
+
 use paste::paste;
 use std::env;
 
