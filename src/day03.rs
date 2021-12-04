@@ -38,15 +38,13 @@ impl Day for Day03 {
         (width, values)
     }
 
-    fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String) {
-        let (width, values) = input;
+    fn solve_part1((width, values): Self::Input) -> (Self::ProcessedInput, String) {
         let gamma = util::unradix((0..width).map(|n| most_common_bit(&values, n)), 2);
         let epsilon = (!gamma) & ((1 << width) - 1);
         ((width, values), (gamma * epsilon).to_string())
     }
 
-    fn solve_part2(input: Self::ProcessedInput) -> String {
-        let (width, values) = input;
+    fn solve_part2((width, values): Self::ProcessedInput) -> String {
         let generator = bit_filter(width, &values, |n, c| most_common_bit(c, n));
         let scrubber = bit_filter(width, &values, |n, c| 1 - most_common_bit(c, n));
         (generator * scrubber).to_string()

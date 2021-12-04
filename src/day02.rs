@@ -26,18 +26,18 @@ impl Day for Day02 {
             .collect()
     }
 
-    fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String) {
+    fn solve_part1(instructions: Self::Input) -> (Self::ProcessedInput, String) {
         let (mut hor, mut ver) = (0, 0);
-        for (dh, dv) in input.iter() {
+        for (dh, dv) in instructions.iter() {
             hor += dh;
             ver += dv;
         }
-        (input, (hor * ver).to_string())
+        (instructions, (hor * ver).to_string())
     }
 
-    fn solve_part2(input: Self::ProcessedInput) -> String {
+    fn solve_part2(instructions: Self::ProcessedInput) -> String {
         let (mut hor, mut ver, mut aim) = (0, 0, 0);
-        for (dh, dv) in input.iter() {
+        for (dh, dv) in instructions.iter() {
             hor += dh;
             ver += aim * dh;
             aim += dv;
