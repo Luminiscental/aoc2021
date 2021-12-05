@@ -4,13 +4,13 @@ use itertools::Itertools;
 
 pub struct Day02;
 
-impl Day for Day02 {
+impl<'a> Day<'a> for Day02 {
     type Input = Vec<(i32, i32)>;
     type ProcessedInput = Vec<(i32, i32)>;
 
     const DAY: usize = 2;
 
-    fn parse(input: String) -> Self::Input {
+    fn parse(input: &'a str) -> Self::Input {
         input
             .lines()
             .map(|line| {

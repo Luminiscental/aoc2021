@@ -29,13 +29,13 @@ impl Display for Error {
 
 impl error::Error for Error {}
 
-pub trait Day {
+pub trait Day<'a> {
     type Input;
     type ProcessedInput;
 
     const DAY: usize;
 
-    fn parse(input: String) -> Self::Input;
+    fn parse(input: &'a str) -> Self::Input;
     fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String);
     fn solve_part2(input: Self::ProcessedInput) -> String;
 
@@ -63,7 +63,7 @@ pub trait Day {
         })
     }
 
-    fn solve_and_print(input: String) {
+    fn solve_and_print(input: &'a str) {
         println!();
         println!("day{:02}:", Self::DAY);
 

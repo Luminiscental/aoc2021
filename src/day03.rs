@@ -23,13 +23,13 @@ fn bit_filter(
 
 pub struct Day03;
 
-impl Day for Day03 {
+impl<'a> Day<'a> for Day03 {
     type Input = (usize, Vec<usize>);
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 3;
 
-    fn parse(input: String) -> Self::Input {
+    fn parse(input: &'a str) -> Self::Input {
         let width = input.lines().next().unwrap().len();
         let values = input
             .lines()

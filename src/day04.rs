@@ -1,6 +1,6 @@
 use super::{
     day::Day,
-    util::{side_effect, CollectArray, IntoUnit},
+    util::{CollectArray, DrainFilterMappable},
 };
 use itertools::iproduct;
 
@@ -55,34 +55,22 @@ impl Board {
 
 pub struct Day04;
 
-impl Day for Day04 {
-    type Input = (Vec<usize>, Vec<Board>);
+impl<'a> Day<'a> for Day04 {
+    type Input = (impl 'a + Iterator<Item = usize>, Vec<Board>);
     type ProcessedInput = impl Iterator<Item = usize>;
 
     const DAY: usize = 4;
 
-    fn parse(input: String) -> Self::Input {
+    fn parse(input: &'a str) -> Self::Input {
         let lines = input.lines().collect::<Vec<_>>();
         (
-            lines[0].split(',').map(|n| n.parse().unwrap()).collect(),
+            lines[0].split(',').map(|n| n.parse().unwrap()),
             lines[1..].split(|&s| s == "").map(Board::parse).collect(),
         )
     }
 
     fn solve_part1((numbers, mut boards): Self::Input) -> (Self::ProcessedInput, String) {
-        let mut to_remove = Vec::new();
-        let mut scores = numbers.into_iter().filter_map(move |number| {
-            let score = boards
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(i, board)| board.call(number).map(side_effect(|| to_remove.push(i))))
-                .last();
-            to_remove
-                .drain(..)
-                .rev()
-                .for_each(|i| boards.remove(i).into_unit());
-            score
-        });
+        let mut scores = numbers.filter_map(move |n| boards.drain_filter_map(|b| b.call(n)).last());
         let score = scores.next().unwrap();
         (scores, score.to_string())
     }

@@ -20,7 +20,7 @@ macro_rules! solve {
     ($day:literal) => {{
         paste! {
             match [<Day $day>]::get_input() {
-                Ok(input) => [<Day $day>]::solve_and_print(input),
+                Ok(input) => [<Day $day>]::solve_and_print(&input),
                 Err(err) => eprintln!("{}", err),
             }
         }

@@ -10,13 +10,13 @@ fn convoluted_increases(values: &[i32], window_size: usize) -> usize {
         .count()
 }
 
-impl Day for Day01 {
+impl<'a> Day<'a> for Day01 {
     type Input = Vec<i32>;
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 1;
 
-    fn parse(input: String) -> Self::Input {
+    fn parse(input: &'a str) -> Self::Input {
         input.lines().map(|line| line.parse().unwrap()).collect()
     }
 
