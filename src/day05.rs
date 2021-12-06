@@ -39,10 +39,7 @@ impl Iterator for Line {
 }
 
 fn count_overlaps<'a>(lines: impl Iterator<Item = &'a Line>) -> usize {
-    lines
-        .flat_map(|&line| line)
-        .duplicates()
-        .count()
+    lines.flat_map(|&line| line).duplicates().count()
 }
 
 pub struct Day05;
