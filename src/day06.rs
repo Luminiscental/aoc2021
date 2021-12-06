@@ -33,3 +33,25 @@ impl<'a> Day<'a> for Day06 {
         populations.iter().sum::<usize>().to_string()
     }
 }
+
+/*
+ * Alternate solution:
+ *
+ * ```python
+ * import numpy as np
+ *
+ * steps = np.matrix([[0, 0, 0, 0, 0, 0, 1, 0, 1],
+ *                    [1, 0, 0, 0, 0, 0, 0, 0, 0],
+ *                    [0, 1, 0, 0, 0, 0, 0, 0, 0],
+ *                    [0, 0, 1, 0, 0, 0, 0, 0, 0],
+ *                    [0, 0, 0, 1, 0, 0, 0, 0, 0],
+ *                    [0, 0, 0, 0, 1, 0, 0, 0, 0],
+ *                    [0, 0, 0, 0, 0, 1, 0, 0, 0],
+ *                    [0, 0, 0, 0, 0, 0, 1, 0, 0],
+ *                    [0, 0, 0, 0, 0, 0, 0, 1, 0]])
+ * coeffs80 = (steps ** 80) @ np.array([1] * 9)
+ * coeffs256 = (steps ** 256) @ np.array([1] * 9)
+ * ```
+ *
+ * Then part1 = coeffs80.dot(populations), part2 = coeffs256.dot(populations).
+ */
