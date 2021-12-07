@@ -123,7 +123,6 @@ pub fn qselect<T: Ord>(k: usize, slice: &mut [T]) -> &T {
     assert!(k < slice.len());
     match slice.len() {
         1 | 2 => &slice[k],
-        3 => &slice[median_of_three(slice)],
         _ => {
             let pivot_index = partition(slice, median_of_three(slice));
             match k.cmp(&pivot_index) {
