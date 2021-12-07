@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 pub trait CollectArray<T, U: Default + AsMut<[T]>>: Sized + Iterator<Item = T> {
     fn collect_array(self) -> U {
         let mut array = U::default();
@@ -89,4 +91,46 @@ pub fn unradix(rev_digits: impl Iterator<Item = usize>, radix: usize) -> usize {
         .zip(itertools::iterate(1, |i| radix * i))
         .map(|p| p.0 * p.1)
         .sum()
+}
+
+pub fn qselect<T: Ord>(k: usize, slice: &mut [T]) -> &T {
+    fn median_of_three<T: Ord>(slice: &[T]) -> usize {
+        let (i1, i2, i3) = (0, slice.len() / 2, slice.len() - 1);
+        let (x1, x2, x3) = (&slice[i1], &slice[i2], &slice[i3]);
+        let is_median = |median, a, b| median < a && median > b || median < b && median > a;
+        if is_median(x1, x2, x3) {
+            i1
+        } else if is_median(x2, x3, x1) {
+            i2
+        } else {
+            i3
+        }
+    }
+
+    fn partition<T: Ord>(slice: &mut [T], pivot_index: usize) -> usize {
+        slice.swap(pivot_index, slice.len() - 1);
+        let mut store_index = 0;
+        for i in 0..slice.len() {
+            if slice[i] < slice[slice.len() - 1] {
+                slice.swap(i, store_index);
+                store_index += 1;
+            }
+        }
+        slice.swap(slice.len() - 1, store_index);
+        store_index
+    }
+
+    assert!(k < slice.len());
+    match slice.len() {
+        1 | 2 => &slice[k],
+        3 => &slice[median_of_three(slice)],
+        _ => {
+            let pivot_index = partition(slice, median_of_three(slice));
+            match k.cmp(&pivot_index) {
+                Ordering::Equal => &slice[k],
+                Ordering::Less => qselect(k, &mut slice[..pivot_index]),
+                Ordering::Greater => qselect(k - pivot_index - 1, &mut slice[pivot_index + 1..]),
+            }
+        }
+    }
 }

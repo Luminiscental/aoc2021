@@ -1,3 +1,4 @@
+#![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
 
 use paste::paste;
@@ -10,6 +11,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 mod util;
 
 use day::Day;
@@ -19,6 +21,7 @@ use day03::Day03;
 use day04::Day04;
 use day05::Day05;
 use day06::Day06;
+use day07::Day07;
 
 macro_rules! solve {
     ($day:literal) => {{
@@ -51,7 +54,7 @@ macro_rules! match_days {
 
 fn main() {
     match env::args().nth(1).as_deref() {
-        None => solve!(06), // latest
-        Some(day) => match_days!(day, 01, 02, 03, 04, 05, 06),
+        None => solve!(07), // latest
+        Some(day) => match_days!(day, 01, 02, 03, 04, 05, 06, 07),
     }
 }
