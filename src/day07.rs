@@ -4,7 +4,7 @@ pub struct Day07;
 
 impl<'a> Day<'a> for Day07 {
     type Input = Vec<usize>;
-    type ProcessedInput = (usize, Vec<usize>);
+    type ProcessedInput = Self::Input;
 
     const DAY: usize = 7;
 
@@ -17,31 +17,18 @@ impl<'a> Day<'a> for Day07 {
     }
 
     fn solve_part1(mut input: Self::Input) -> (Self::ProcessedInput, String) {
-        let lower_median = *util::qselect(input.len() / 2, &mut input);
-        let fuel = input
-            .iter()
-            .map(|n| n.abs_diff(lower_median))
-            .sum::<usize>();
-        ((lower_median, input), fuel.to_string())
+        let argmin = *util::qselect(input.len() / 2, &mut input);
+        let fuel = input.iter().map(|n| n.abs_diff(argmin)).sum::<usize>();
+        (input, fuel.to_string())
     }
 
-    fn solve_part2((lower_median, input): Self::ProcessedInput) -> String {
-        let mean = input.iter().sum::<usize>() as f32 / input.len() as f32;
-        let range = if mean > lower_median as f32 {
-            lower_median..=mean.floor() as usize
-        } else {
-            mean.ceil() as usize..=lower_median + 1
-        };
-        range
-            .map(|h| {
-                input
-                    .iter()
-                    .map(|n| n.abs_diff(h))
-                    .map(|n| n * (n + 1) / 2)
-                    .sum::<usize>()
-            })
-            .min()
-            .unwrap()
+    fn solve_part2(input: Self::ProcessedInput) -> String {
+        let argmin = (input.iter().sum::<usize>() as f32 / input.len() as f32).round() as usize;
+        input
+            .into_iter()
+            .map(|n| n.abs_diff(argmin))
+            .map(|n| n * (n + 1) / 2)
+            .sum::<usize>()
             .to_string()
     }
 }
@@ -56,13 +43,14 @@ impl<'a> Day<'a> for Day07 {
  * part2:
  *   Now we're minimizing f(x) = \sum T(|h-x|) where T(n) = 1 + ... + n is the
  *   triangle number with well-known formula T(n) = (n^2+n)/2. Hence it's enough
- *   to minimize g(x) = \sum|h-x| + \sum(h-x)^2. The first term is minimized by
- *   the median as in part1, and the second is minimized by the mean by basic
- *   calculus. Since both are convex, we can conclude that the minimum is
- *   between the median and the mean.
- *
- *   One can also note that T(n) = (n+0.5)^2/2 - 1/8, so we could view it as
- *   minimizing g(x) = \sum(|h-x|+0.5)^2, but this is different from \sum(h-x)^2
- *   by an error of \sum|h-x|, which is significant. As it happens the answer is
- *   always an integer adjacent to the mean, and I don't understand why.
+ *   to minimize g(x) = \sum|h-x| + \sum(h-x)^2. As a sum of convex functions,
+ *   this is convex, and so its minimum occurs at the point where its derivative
+ *   changes sign (possibly this is a jump discontinuity of the derivative like
+ *   in part1). Now g'(x) = \sum sign(h-x) + 2\sum(h-x), and if N is the number
+ *   of crabs then the first term is bounded by N. But plugging x=mean(h)+0.5
+ *   and x=mean(h)-0.5 into the second term gives N and -N, so that the sign-
+ *   change must happen between mean(h)-0.5 and mean(h)+0.5. Then the closest
+ *   integers to the minimum on either side will be round(mean(h)) and one of
+ *   its adjacents, where round(mean(h)) is the closest (or a tie). Since g is
+ *   a parabola between them, this guarantees that round(mean(h)) is the minimum.
  */
