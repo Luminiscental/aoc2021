@@ -23,12 +23,19 @@ impl<'a> Day<'a> for Day07 {
     }
 
     fn solve_part2(input: Self::ProcessedInput) -> String {
-        let argmin = (input.iter().sum::<usize>() as f32 / input.len() as f32).round() as usize;
-        input
-            .into_iter()
-            .map(|n| n.abs_diff(argmin))
-            .map(|n| n * (n + 1) / 2)
-            .sum::<usize>()
+        let rounded_mean =
+            (input.iter().sum::<usize>() as f32 / input.len() as f32).round() as usize;
+        [rounded_mean - 1, rounded_mean, rounded_mean + 1]
+            .iter()
+            .map(|&candidate| {
+                input
+                    .iter()
+                    .map(|n| n.abs_diff(candidate))
+                    .map(|n| n * (n + 1) / 2)
+                    .sum::<usize>()
+            })
+            .min()
+            .unwrap()
             .to_string()
     }
 }
@@ -51,6 +58,6 @@ impl<'a> Day<'a> for Day07 {
  *   and x=mean(h)-0.5 into the second term gives N and -N, so that the sign-
  *   change must happen between mean(h)-0.5 and mean(h)+0.5. Then the closest
  *   integers to the minimum on either side will be round(mean(h)) and one of
- *   its adjacents, where round(mean(h)) is the closest (or a tie). Since g is
- *   a parabola between them, this guarantees that round(mean(h)) is the minimum.
+ *   its adjacents, and one of these must be the integer-valued minimum by
+ *   convexity.
  */
