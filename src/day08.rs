@@ -3,46 +3,6 @@ use super::{
     util::{self, CollectArray},
 };
 
-fn pack(s: &str) -> usize {
-    s.chars()
-        .map(|c| c as usize - 'a' as usize)
-        .map(|n| 1 << n)
-        .sum()
-}
-
-fn decode(digits: &[&str]) -> [usize; 10] {
-    let eight = pack("abcdefg");
-    let one = pack(digits.iter().find(|s| s.len() == 2).unwrap());
-    let four = pack(digits.iter().find(|s| s.len() == 4).unwrap());
-    let seven = pack(digits.iter().find(|s| s.len() == 3).unwrap());
-    let two_three_five: [_; 3] = digits
-        .iter()
-        .filter(|s| s.len() == 5)
-        .map(|s| pack(s))
-        .collect_array();
-    let horizontals = two_three_five[0] & two_three_five[1] & two_three_five[2];
-    let middle = four & horizontals;
-    let top_left = four & !one & !horizontals;
-    let bottom_left = eight & !four & !seven & !horizontals;
-    let two = *two_three_five
-        .iter()
-        .find(|&n| n & bottom_left != 0)
-        .unwrap();
-    let top_right = two & one;
-    [
-        eight & !middle,
-        one,
-        two,
-        eight & !top_left & !bottom_left,
-        four,
-        eight & !top_right & !bottom_left,
-        eight & !top_right,
-        seven,
-        eight,
-        eight & !bottom_left,
-    ]
-}
-
 pub struct Day08;
 
 impl<'a> Day<'a> for Day08 {
@@ -68,18 +28,30 @@ impl<'a> Day<'a> for Day08 {
     }
 
     fn solve_part2(input: Self::ProcessedInput) -> String {
+        let pack = |s: &str| s.chars().map(|c| 1 << (c as usize - 'a' as usize)).sum();
+        let find_nsegments = |slice: &[&str], n| pack(slice.iter().find(|s| s.len() == n).unwrap());
+        let decode = |s, one: usize, four: usize| {
+            let d: usize = pack(s);
+            match (s.len(), (d & one).count_ones(), (d & four).count_ones()) {
+                (2, _, _) => 1,
+                (3, _, _) => 7,
+                (4, _, _) => 4,
+                (5, 1, 2) => 2,
+                (5, 1, 3) => 5,
+                (5, 2, _) => 3,
+                (6, 1, _) => 6,
+                (6, 2, 3) => 0,
+                (6, 2, 4) => 9,
+                (7, _, _) => 8,
+                _ => panic!(),
+            }
+        };
         input
             .iter()
             .map(|line| {
-                let digits = decode(&line[..10]);
-                util::unradix(
-                    line[10..]
-                        .iter()
-                        .map(|s| pack(s))
-                        .map(|d| digits.iter().position(|&n| n == d).unwrap())
-                        .rev(),
-                    10,
-                )
+                let one = find_nsegments(&line[..10], 2);
+                let four = find_nsegments(&line[..10], 4);
+                util::unradix(line[10..].iter().map(|s| decode(s, one, four)).rev(), 10)
             })
             .sum::<usize>()
             .to_string()
