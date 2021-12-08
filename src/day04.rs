@@ -65,7 +65,10 @@ impl<'a> Day<'a> for Day04 {
         let lines = input.lines().collect::<Vec<_>>();
         (
             lines[0].split(',').map(|n| n.parse().unwrap()),
-            lines[1..].split(|&s| s == "").map(Board::parse).collect(),
+            lines[1..]
+                .split(|s| s.is_empty())
+                .map(Board::parse)
+                .collect(),
         )
     }
 
