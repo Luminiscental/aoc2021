@@ -8,10 +8,6 @@ fn adjacents(p: (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
         .filter(|p| p.0 < 100 && p.1 < 100)
 }
 
-fn idx(point: (usize, usize), heights: &[u32]) -> u32 {
-    heights[point.0 * 100 + point.1]
-}
-
 pub struct Day09;
 
 impl<'a> Day<'a> for Day09 {
@@ -31,8 +27,8 @@ impl<'a> Day<'a> for Day09 {
         let mut low_points = Vec::new();
         let mut risk = 0;
         for point in iproduct!(0..100, 0..100) {
-            let height = idx(point, &heights);
-            if adjacents(point).all(|p| idx(p, &heights) > height) {
+            let height = heights[100 * point.0 + point.1];
+            if adjacents(point).all(|p| heights[100 * p.0 + p.1] > height) {
                 low_points.push(point);
                 risk += height + 1;
             }
@@ -41,16 +37,10 @@ impl<'a> Day<'a> for Day09 {
     }
 
     fn solve_part2((low_points, heights): Self::ProcessedInput) -> String {
+        let neighbours = |p| adjacents(p).filter(|&a| heights[100 * a.0 + a.1] != 9);
         low_points
             .into_iter()
-            .map(|point| {
-                util::bfs(
-                    point,
-                    |p| adjacents(p).filter(|&a| idx(a, &heights) < 9),
-                    |_| {},
-                )
-                .len()
-            })
+            .map(|point| util::bfs(point, neighbours, |_| {}).len())
             .sorted()
             .rev()
             .take(3)
