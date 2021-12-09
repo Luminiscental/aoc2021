@@ -1,4 +1,8 @@
-use std::{cmp::Ordering, collections::HashSet, hash::Hash};
+use std::{
+    cmp::Ordering,
+    collections::{HashSet, VecDeque},
+    hash::Hash,
+};
 
 pub trait CollectArray<T, U: Default + AsMut<[T]>>: Sized + Iterator<Item = T> {
     fn collect_array(self) -> U {
@@ -141,14 +145,15 @@ where
     I: Iterator<Item = N>,
     G: FnMut(N),
 {
-    let mut queue = vec![root];
+    let mut queue = VecDeque::new();
     let mut visited = HashSet::new();
+    queue.push_front(root);
     visited.insert(root);
-    while let Some(node) = queue.pop() {
+    while let Some(node) = queue.pop_back() {
         for x in adjacents(node) {
             if !visited.contains(&x) {
                 visit(x);
-                queue.push(x);
+                queue.push_front(x);
                 visited.insert(x);
             }
         }
