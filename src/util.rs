@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashSet, hash::Hash};
 
 pub trait CollectArray<T, U: Default + AsMut<[T]>>: Sized + Iterator<Item = T> {
     fn collect_array(self) -> U {
@@ -132,4 +132,26 @@ pub fn qselect<T: Ord>(k: usize, slice: &mut [T]) -> &T {
             }
         }
     }
+}
+
+pub fn bfs<N, F, G, I>(root: N, adjacents: F, mut visit: G) -> HashSet<N>
+where
+    N: Eq + Hash + Copy,
+    F: Fn(N) -> I,
+    I: Iterator<Item = N>,
+    G: FnMut(N),
+{
+    let mut queue = vec![root];
+    let mut visited = HashSet::new();
+    visited.insert(root);
+    while let Some(node) = queue.pop() {
+        for x in adjacents(node) {
+            if !visited.contains(&x) {
+                visit(x);
+                queue.push(x);
+                visited.insert(x);
+            }
+        }
+    }
+    visited
 }
