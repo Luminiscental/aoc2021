@@ -2,6 +2,8 @@ use std::{
     cmp::Ordering,
     collections::{HashSet, VecDeque},
     hash::Hash,
+    iter::Sum,
+    ops::AddAssign,
 };
 
 pub trait CollectArray<T, U: Default + AsMut<[T]>>: Sized + Iterator<Item = T> {
@@ -159,4 +161,18 @@ where
         }
     }
     visited
+}
+
+pub struct Summation<T>(pub T);
+
+impl<T: AddAssign + Sum> Extend<T> for Summation<T> {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        self.0 += iter.into_iter().sum();
+    }
+}
+
+impl<T: Default> Default for Summation<T> {
+    fn default() -> Self {
+        Self(T::default())
+    }
 }
