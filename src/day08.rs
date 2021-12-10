@@ -18,16 +18,16 @@ impl<'a> Day<'a> for Day08 {
             .collect()
     }
 
-    fn solve_part1(input: Self::Input) -> (Self::ProcessedInput, String) {
-        let occurences = input
+    fn solve_part1(displays: Self::Input) -> (Self::ProcessedInput, String) {
+        let occurences = displays
             .iter()
-            .flat_map(|a| a[10..].iter())
+            .flat_map(|display| display[10..].iter())
             .filter(|s| [2, 3, 4, 7].contains(&s.len()))
             .count();
-        (input, occurences.to_string())
+        (displays, occurences.to_string())
     }
 
-    fn solve_part2(input: Self::ProcessedInput) -> String {
+    fn solve_part2(displays: Self::ProcessedInput) -> String {
         let pack = |s: &str| s.chars().map(|c| 1 << (c as usize - 'a' as usize)).sum();
         let find_nsegments = |slice: &[&str], n| pack(slice.iter().find(|s| s.len() == n).unwrap());
         let decode = |s, one: usize, four: usize| {
@@ -46,12 +46,12 @@ impl<'a> Day<'a> for Day08 {
                 _ => panic!(),
             }
         };
-        input
+        displays
             .iter()
-            .map(|line| {
-                let one = find_nsegments(&line[..10], 2);
-                let four = find_nsegments(&line[..10], 4);
-                util::unradix(line[10..].iter().map(|s| decode(s, one, four)).rev(), 10)
+            .map(|display| {
+                let one = find_nsegments(&display[..10], 2);
+                let four = find_nsegments(&display[..10], 4);
+                util::unradix(display[10..].iter().map(|s| decode(s, one, four)).rev(), 10)
             })
             .sum::<usize>()
             .to_string()

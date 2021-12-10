@@ -16,21 +16,21 @@ impl<'a> Day<'a> for Day07 {
             .collect()
     }
 
-    fn solve_part1(mut input: Self::Input) -> (Self::ProcessedInput, String) {
-        let argmin = *util::qselect(input.len() / 2, &mut input);
-        let fuel = input.iter().map(|n| n.abs_diff(argmin)).sum::<usize>();
-        (input, fuel.to_string())
+    fn solve_part1(mut heights: Self::Input) -> (Self::ProcessedInput, String) {
+        let argmin = *util::qselect(heights.len() / 2, &mut heights);
+        let fuel = heights.iter().map(|h| h.abs_diff(argmin)).sum::<usize>();
+        (heights, fuel.to_string())
     }
 
-    fn solve_part2(input: Self::ProcessedInput) -> String {
+    fn solve_part2(heights: Self::ProcessedInput) -> String {
         let rounded_mean =
-            (input.iter().sum::<usize>() as f32 / input.len() as f32).round() as usize;
+            (heights.iter().sum::<usize>() as f32 / heights.len() as f32).round() as usize;
         [rounded_mean - 1, rounded_mean, rounded_mean + 1]
             .iter()
             .map(|&candidate| {
-                input
+                heights
                     .iter()
-                    .map(|n| n.abs_diff(candidate))
+                    .map(|h| h.abs_diff(candidate))
                     .map(|n| n * (n + 1) / 2)
                     .sum::<usize>()
             })

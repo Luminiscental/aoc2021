@@ -7,13 +7,13 @@ use itertools::Itertools;
 pub struct Day10;
 
 impl<'a> Day<'a> for Day10 {
-    type Input = Vec<&'a str>;
+    type Input = impl 'a + Iterator<Item = &'a str>;
     type ProcessedInput = Vec<String>;
 
     const DAY: usize = 10;
 
     fn parse(input: &'a str) -> Self::Input {
-        input.lines().collect()
+        input.lines()
     }
 
     fn solve_part1(lines: Self::Input) -> (Self::ProcessedInput, String) {
@@ -28,20 +28,14 @@ impl<'a> Day<'a> for Day10 {
             }
             Ok(String::from_utf8(stack).unwrap())
         }
-        let (completions, Summation(score)) = lines.into_iter().map(validate).partition_result();
+        let (completions, Summation(score)) = lines.map(validate).partition_result();
         (completions, score.to_string())
     }
 
     fn solve_part2(completions: Self::ProcessedInput) -> String {
         let mut scores = completions
             .into_iter()
-            .map(|completion| {
-                completion
-                    .chars()
-                    .rev()
-                    .map(|c| ")]}>".find(c).unwrap())
-                    .fold(0, |s, n| 5 * s + n + 1)
-            })
+            .map(|s| util::unradix(s.chars().map(|c| 1 + ")]}>".find(c).unwrap()), 5))
             .collect::<Vec<_>>();
         util::qselect(scores.len() / 2, &mut scores).to_string()
     }
