@@ -1,5 +1,4 @@
 use super::day::Day;
-use std::collections::BTreeSet;
 
 fn for_adjacents<F: FnMut(usize)>(i: usize, mut f: F) {
     macro_rules! for_each {
@@ -20,21 +19,31 @@ fn for_adjacents<F: FnMut(usize)>(i: usize, mut f: F) {
     }
 }
 
-fn step(energy_levels: &mut Vec<u32>) -> usize {
-    let mut flashed = BTreeSet::new();
-    energy_levels.iter_mut().for_each(|o| *o += 1);
-    let mut to_flash: BTreeSet<_> = (0..100).filter(|&i| energy_levels[i] > 9).collect();
-    while let Some(flasher) = to_flash.pop_last() {
-        flashed.insert(flasher);
-        for_adjacents(flasher, |i| {
+fn flash(flasher: usize, energy_levels: &mut [u32]) -> usize {
+    let mut flashes = 1;
+    energy_levels[flasher] = u32::MAX;
+    for_adjacents(flasher, |i| {
+        if energy_levels[i] != u32::MAX {
             energy_levels[i] += 1;
-            if energy_levels[i] > 9 && !flashed.contains(&i) {
-                to_flash.insert(i);
+            if energy_levels[i] > 8 {
+                flashes += flash(i, energy_levels);
             }
-        });
+        }
+    });
+    flashes
+}
+
+fn step(energy_levels: &mut [u32]) -> usize {
+    let mut flashes = 0;
+    for i in 0..100 {
+        if energy_levels[i] == 9 {
+            flashes += flash(i, energy_levels);
+        }
     }
-    flashed.iter().for_each(|&i| energy_levels[i] = 0);
-    flashed.len()
+    energy_levels
+        .iter_mut()
+        .for_each(|o| *o = o.wrapping_add(1));
+    flashes
 }
 
 pub struct Day11;
