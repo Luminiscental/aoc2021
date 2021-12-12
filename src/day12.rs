@@ -1,41 +1,72 @@
 use super::day::Day;
 use itertools::Itertools;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
-const START: [u8; 2] = [0, 0];
-const END: [u8; 2] = [!0, !0];
+type Cave = [u8; 2];
 
-fn count_paths(edge_map: &HashMap<[u8; 2], Vec<[u8; 2]>>, allow_dups: bool) -> usize {
-    let mut count = 0;
-    let mut queue = VecDeque::new();
-    queue.push_front((Vec::new(), allow_dups));
-    while let Some(path) = queue.pop_back() {
-        for &cave in edge_map[path.0.last().unwrap_or(&START)].iter() {
-            if cave == END {
-                count += 1;
-            } else if cave[0].is_ascii_uppercase() || !path.0.contains(&cave) {
-                queue.push_front(([path.0.clone(), vec![cave]].concat(), path.1));
-            } else if path.1 {
-                queue.push_front(([path.0.clone(), vec![cave]].concat(), false));
+const START: Cave = [0, 0];
+const END: Cave = [!0, !0];
+
+fn calculate_weights(edges: HashMap<Cave, Vec<Cave>>) -> HashMap<Cave, HashMap<Cave, usize>> {
+    let mut weighted_edges = HashMap::new();
+    let mut add_edge = |start, end| {
+        *weighted_edges
+            .entry(start)
+            .or_insert_with(HashMap::new)
+            .entry(end)
+            .or_insert(0) += 1
+    };
+    for &small_cave in edges
+        .keys()
+        .filter(|&&cave| cave == START || cave[0].is_ascii_lowercase())
+    {
+        for &end in edges[&small_cave].iter() {
+            if end[0].is_ascii_uppercase() {
+                for &next_small_cave in edges[&end].iter() {
+                    add_edge(small_cave, next_small_cave);
+                }
+            } else {
+                add_edge(small_cave, end);
             }
         }
     }
-    count
+    weighted_edges
+}
+
+fn completions(
+    path: Vec<Cave>,
+    small_edges: &HashMap<Cave, HashMap<Cave, usize>>,
+    allow_dups: bool,
+) -> usize {
+    small_edges[path.last().unwrap_or(&START)]
+        .iter()
+        .map(|(&cave, &weight)| {
+            if cave == END {
+                weight
+            } else if !path.contains(&cave) {
+                weight * completions([path.clone(), vec![cave]].concat(), small_edges, allow_dups)
+            } else if allow_dups {
+                weight * completions([path.clone(), vec![cave]].concat(), small_edges, false)
+            } else {
+                0
+            }
+        })
+        .sum()
 }
 
 pub struct Day12;
 
 impl<'a> Day<'a> for Day12 {
-    type Input = HashMap<[u8; 2], Vec<[u8; 2]>>;
+    type Input = HashMap<Cave, HashMap<Cave, usize>>;
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 12;
 
     fn parse(input: &'a str) -> Self::Input {
-        let mut map = HashMap::new();
+        let mut edges = HashMap::new();
         let mut add_edge = |s, e| {
             if e != START {
-                map.entry(s).or_insert_with(Vec::new).push(e)
+                edges.entry(s).or_insert_with(Vec::new).push(e)
             }
         };
         for line in input.lines() {
@@ -51,15 +82,15 @@ impl<'a> Day<'a> for Day12 {
             add_edge(a, b);
             add_edge(b, a);
         }
-        map
+        calculate_weights(edges)
     }
 
-    fn solve_part1(edge_map: Self::Input) -> (Self::ProcessedInput, String) {
-        let count = count_paths(&edge_map, false);
-        (edge_map, count.to_string())
+    fn solve_part1(small_edges: Self::Input) -> (Self::ProcessedInput, String) {
+        let count = completions(Vec::new(), &small_edges, false);
+        (small_edges, count.to_string())
     }
 
-    fn solve_part2(edge_map: Self::ProcessedInput) -> String {
-        count_paths(&edge_map, true).to_string()
+    fn solve_part2(small_edges: Self::ProcessedInput) -> String {
+        completions(Vec::new(), &small_edges, true).to_string()
     }
 }
