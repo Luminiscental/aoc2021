@@ -5,18 +5,18 @@ use std::collections::{HashMap, VecDeque};
 const START: [u8; 2] = [0, 0];
 const END: [u8; 2] = [!0, !0];
 
-fn count_paths<F>(edge_map: &HashMap<[u8; 2], Vec<[u8; 2]>>, can_go: F) -> usize
-where
-    F: Fn(&[[u8; 2]], [u8; 2]) -> bool,
-{
+fn count_paths(edge_map: &HashMap<[u8; 2], Vec<[u8; 2]>>, allow_dups: bool) -> usize {
     let mut count = 0;
-    let mut queue: VecDeque<_> = edge_map[&START].iter().map(|&cave| vec![cave]).collect();
+    let mut queue = VecDeque::new();
+    queue.push_front((Vec::new(), allow_dups));
     while let Some(path) = queue.pop_back() {
-        for &cave in edge_map[path.last().unwrap()].iter() {
+        for &cave in edge_map[path.0.last().unwrap_or(&START)].iter() {
             if cave == END {
                 count += 1;
-            } else if can_go(&path, cave) {
-                queue.push_front([path.clone(), vec![cave]].concat());
+            } else if cave[0].is_ascii_uppercase() || !path.0.contains(&cave) {
+                queue.push_front(([path.0.clone(), vec![cave]].concat(), path.1));
+            } else if path.1 {
+                queue.push_front(([path.0.clone(), vec![cave]].concat(), false));
             }
         }
     }
@@ -55,23 +55,11 @@ impl<'a> Day<'a> for Day12 {
     }
 
     fn solve_part1(edge_map: Self::Input) -> (Self::ProcessedInput, String) {
-        let count = count_paths(&edge_map, |path, cave| {
-            cave[0].is_ascii_uppercase() || !path.contains(&cave)
-        });
+        let count = count_paths(&edge_map, false);
         (edge_map, count.to_string())
     }
 
     fn solve_part2(edge_map: Self::ProcessedInput) -> String {
-        count_paths(&edge_map, |path, cave| {
-            cave[0].is_ascii_uppercase()
-                || !path.contains(&cave)
-                || path
-                    .iter()
-                    .filter(|&&cave| cave[0].is_ascii_lowercase())
-                    .duplicates()
-                    .next()
-                    .is_none()
-        })
-        .to_string()
+        count_paths(&edge_map, true).to_string()
     }
 }
