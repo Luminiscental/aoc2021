@@ -16,6 +16,28 @@ fn fold(grid: &mut HashSet<[u16; 2]>, fold: (u8, u16)) {
         .collect();
 }
 
+fn decode(char_idx: u16, grid: &HashSet<[u16; 2]>) -> char {
+    let b = char_idx * 5;
+    let check = |x, y| grid.contains(&[x, y]) as u8;
+    match (check(b, 0), check(b + 3, 0), check(b, 5), check(b + 3, 5)) {
+        (0, 0, 0, 0) => 'C',
+        (0, 0, 0, 1) => 'G',
+        (0, 0, 1, 1) => 'A',
+        (0, 1, 0, 0) => 'J',
+        (1, 0, 1, 0) if check(b + 1, 5) == 1 => 'B',
+        (1, 0, 1, 0) => 'P',
+        (1, 0, 1, 1) if check(b + 1, 0) == 1 => 'R',
+        (1, 0, 1, 1) => 'L',
+        (1, 1, 0, 0) => 'U',
+        (1, 1, 1, 0) => 'F',
+        (1, 1, 1, 1) if check(b + 3, 4) == 1 => 'H',
+        (1, 1, 1, 1) if check(b + 1, 3) == 1 => 'Z',
+        (1, 1, 1, 1) if check(b + 1, 0) == 1 => 'E',
+        (1, 1, 1, 1) => 'K',
+        _ => panic!(),
+    }
+}
+
 pub struct Day13;
 
 impl<'a> Day<'a> for Day13 {
@@ -45,9 +67,6 @@ impl<'a> Day<'a> for Day13 {
 
     fn solve_part2((mut grid, folds): Self::ProcessedInput) -> String {
         folds.into_iter().for_each(|f| fold(&mut grid, f));
-        let get_char = |point| if grid.contains(&point) { '█' } else { ' ' };
-        (0..=5)
-            .map(|y| -> String { (0..=38).map(|x| get_char([x, y])).collect() })
-            .join("\n")
+        (0..=7).map(|i| decode(i, &grid)).collect()
     }
 }

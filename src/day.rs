@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use reqwest::{self, header::COOKIE};
 use std::{
     error,
@@ -68,8 +67,6 @@ pub trait Day<'a> {
         println!();
         println!("day{:02}:", Self::DAY);
 
-        let indent = |s: &str| s.lines().map(|line| ["    ", line].concat()).join("\n");
-
         let start_time = Instant::now();
         let input = Self::parse(input);
         let parsed_time = Instant::now();
@@ -81,16 +78,16 @@ pub trait Day<'a> {
         let (processed_input, part1_answer) = Self::solve_part1(input);
         let part1_time = Instant::now();
         println!(
-            "  part1:\n{} (elapsed {}ms)",
-            indent(&part1_answer),
+            "  part1: {} (elapsed {}ms)",
+            part1_answer,
             1000.0 * (part1_time - parsed_time).as_secs_f32()
         );
 
         let part2_answer = Self::solve_part2(processed_input);
         let part2_time = Instant::now();
         println!(
-            "  part2:\n{} (elapsed {}ms)",
-            indent(&part2_answer),
+            "  part2: {} (elapsed {}ms)",
+            part2_answer,
             1000.0 * (part2_time - part1_time).as_secs_f32()
         )
     }
