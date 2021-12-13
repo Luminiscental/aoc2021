@@ -1,36 +1,39 @@
 use super::{day::Day, util::CollectArray};
 use itertools::Itertools;
-use std::{collections::VecDeque, mem};
+use std::{
+    collections::{HashSet, VecDeque},
+    mem,
+};
 
-fn fold(grid: &mut Vec<[u32; 2]>, fold: (u8, u32)) {
-    for point in grid.iter_mut() {
-        point[fold.0 as usize] = point[fold.0 as usize].min(2 * fold.1 - point[fold.0 as usize]);
-    }
-    *grid = mem::take(grid).into_iter().unique().collect();
+fn fold(grid: &mut HashSet<[u32; 2]>, fold: (u8, u32)) {
+    *grid = mem::take(grid)
+        .into_iter()
+        .map(|mut point| {
+            point[fold.0 as usize] =
+                u32::min(point[fold.0 as usize], 2 * fold.1 - point[fold.0 as usize]);
+            point
+        })
+        .collect();
 }
 
 pub struct Day13;
 
 impl<'a> Day<'a> for Day13 {
-    type Input = (Vec<[u32; 2]>, VecDeque<(u8, u32)>);
+    type Input = (HashSet<[u32; 2]>, VecDeque<(u8, u32)>);
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 13;
 
     fn parse(input: &'a str) -> Self::Input {
         let (paper, folds) = input.split("\n\n").next_tuple().unwrap();
+        let parse_point = |s: &str| s.split(',').map(|n| n.parse().unwrap()).collect_array();
+        let parse_fold = |s: &str| {
+            let (axis, n) = s[11..].split('=').next_tuple().unwrap();
+            (axis.as_bytes()[0] - b'x', n.parse().unwrap())
+        };
         (
-            paper
-                .lines()
-                .map(|s| s.split(',').map(|n| n.parse().unwrap()).collect_array())
-                .collect(),
-            folds
-                .lines()
-                .map(|s| {
-                    let (axis, n) = s[11..].split('=').next_tuple().unwrap();
-                    (axis.as_bytes()[0] - b'x', n.parse().unwrap())
-                })
-                .collect(),
+            paper.lines().map(parse_point).collect(),
+            folds.lines().map(parse_fold).collect(),
         )
     }
 
@@ -42,14 +45,9 @@ impl<'a> Day<'a> for Day13 {
 
     fn solve_part2((mut grid, folds): Self::ProcessedInput) -> String {
         folds.into_iter().for_each(|f| fold(&mut grid, f));
-        let xmax = grid.iter().map(|point| point[0]).max().unwrap();
-        let ymax = grid.iter().map(|point| point[1]).max().unwrap();
-        (0..=ymax)
-            .map(|y| -> String {
-                (0..=xmax)
-                    .map(|x| if grid.contains(&[x, y]) { '█' } else { ' ' })
-                    .collect()
-            })
+        let get_char = |point| if grid.contains(&point) { '█' } else { ' ' };
+        (0..=5)
+            .map(|y| -> String { (0..=38).map(|x| get_char([x, y])).collect() })
             .join("\n")
     }
 }
