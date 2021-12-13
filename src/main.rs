@@ -1,6 +1,5 @@
 #![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
-#![feature(map_first_last)]
 
 use paste::paste;
 use std::env;
