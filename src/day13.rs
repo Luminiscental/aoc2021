@@ -5,12 +5,12 @@ use std::{
     mem,
 };
 
-fn fold(grid: &mut HashSet<[u32; 2]>, fold: (u8, u32)) {
+fn fold(grid: &mut HashSet<[u16; 2]>, fold: (u8, u16)) {
     *grid = mem::take(grid)
         .into_iter()
         .map(|mut point| {
             point[fold.0 as usize] =
-                u32::min(point[fold.0 as usize], 2 * fold.1 - point[fold.0 as usize]);
+                u16::min(point[fold.0 as usize], 2 * fold.1 - point[fold.0 as usize]);
             point
         })
         .collect();
@@ -19,7 +19,7 @@ fn fold(grid: &mut HashSet<[u32; 2]>, fold: (u8, u32)) {
 pub struct Day13;
 
 impl<'a> Day<'a> for Day13 {
-    type Input = (HashSet<[u32; 2]>, VecDeque<(u8, u32)>);
+    type Input = (HashSet<[u16; 2]>, VecDeque<(u8, u16)>);
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 13;
