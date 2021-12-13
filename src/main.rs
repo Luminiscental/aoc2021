@@ -1,39 +1,25 @@
 #![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
 
-use paste::paste;
-use std::env;
-
 mod day;
-mod day01;
-mod day02;
-mod day03;
-mod day04;
-mod day05;
-mod day06;
-mod day07;
-mod day08;
-mod day09;
-mod day10;
-mod day11;
-mod day12;
-mod day13;
 mod util;
 
 use day::Day;
-use day01::Day01;
-use day02::Day02;
-use day03::Day03;
-use day04::Day04;
-use day05::Day05;
-use day06::Day06;
-use day07::Day07;
-use day08::Day08;
-use day09::Day09;
-use day10::Day10;
-use day11::Day11;
-use day12::Day12;
-use day13::Day13;
+use paste::paste;
+use std::env;
+
+macro_rules! import_days {
+    ($day:literal) => {
+        paste! {
+            mod [<day $day>];
+            use [<day $day>]::[<Day $day>];
+        }
+    };
+    ($day:literal, $($days:literal),+) => {
+        import_days!($day);
+        import_days!($($days),+);
+    }
+}
 
 macro_rules! solve {
     ($day:literal) => {{
@@ -64,9 +50,23 @@ macro_rules! match_days {
     }}
 }
 
-fn main() {
-    match env::args().nth(1).as_deref() {
-        None => solve!(13), // latest
-        Some(day) => match_days!(day, 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13),
+macro_rules! declare_main {
+    ($last_day:literal => $($days:literal),+) => {
+        import_days!($($days),+);
+        fn main() {
+            #[allow(clippy::zero_prefixed_literal)]
+            match env::args().nth(1).as_deref() {
+                None => solve!($last_day),
+                Some(day) => match_days!(day, $($days),+),
+            }
+        }
+    };
+    ($head_day:literal, $($last_days:literal),+ => $($days:literal),+) => {
+        declare_main!($($last_days),+ => $($days),+);
+    };
+    ($($days:literal),+) => {
+        declare_main!($($days),+ => $($days),+);
     }
 }
+
+declare_main!(01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13);
