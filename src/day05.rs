@@ -1,7 +1,7 @@
-use super::day::Day;
+use super::{day::Day, util::Ignore};
 use itertools::Itertools;
+use std::collections::HashSet;
 
-#[derive(Clone, Copy)]
 pub struct Line {
     start: (i32, i32),
     end: (i32, i32),
@@ -13,33 +13,66 @@ impl Line {
         let (sx, sy, ex, ey) = string
             .split(" -> ")
             .flat_map(|s| s.split(','))
-            .map(|n| n.parse::<i32>().unwrap())
+            .map(|n| n.parse().unwrap())
             .next_tuple()
             .unwrap();
-        let delta = ((ex - sx).signum(), (ey - sy).signum());
         Self {
             start: (sx, sy),
-            end: (ex + delta.0, ey + delta.1),
-            delta,
+            end: (ex, ey),
+            delta: (ex - sx, ey - sy),
+        }
+    }
+
+    fn for_overlaps<F: FnMut((i32, i32))>(&self, o: &Line, mut f: F) {
+        let denom = self.delta.1 * o.delta.0 - self.delta.0 * o.delta.1;
+        if denom == 0 {
+            if self.delta.0 * (o.start.1 - self.start.1)
+                == self.delta.1 * (o.start.0 - self.start.0)
+            {
+                let endpoints = |s: i32, e: i32, os: i32, oe: i32, d: i32, od: i32| {
+                    if d == 0 {
+                        (s, e)
+                    } else {
+                        let o_fst = ((os + oe) + d * od * (os - oe)) / 2;
+                        let o_lst = os + oe - o_fst;
+                        (d * (d * s).max(d * o_fst), d * (d * e).min(d * o_lst))
+                    }
+                };
+                let (dx, dy) = (self.delta.0.signum(), self.delta.1.signum());
+                let (odx, ody) = (o.delta.0.signum(), o.delta.1.signum());
+                let (sx, ex) = endpoints(self.start.0, self.end.0, o.start.0, o.end.0, dx, odx);
+                let (sy, ey) = endpoints(self.start.1, self.end.1, o.start.1, o.end.1, dy, ody);
+                let (nx, ny) = (dx * (ex - sx), dy * (ey - sy));
+                if nx >= 0 && ny >= 0 {
+                    (0..=nx.max(ny)).for_each(|i| f((sx + i * dx, sy + i * dy)));
+                }
+            }
+        } else {
+            let t = self.start.0 * o.delta.1
+                + o.start.0 * (self.start.1 - o.end.1)
+                + o.end.0 * (o.start.1 - self.start.1);
+            let s = -(self.start.0 * (o.start.1 - self.end.1)
+                + self.end.0 * (self.start.1 - o.start.1)
+                + o.start.0 * self.delta.1);
+            let inside = |t| (0 <= t && t <= denom) || (denom <= t && t <= 0);
+            let exact = self.delta.0 * self.delta.1 * o.delta.0 * o.delta.1 == 0
+                || ((t * self.delta.0 % denom == 0) && (s * o.delta.0 % denom == 0));
+            if inside(t) && inside(s) && exact {
+                f((
+                    self.start.0 + t * self.delta.0 / denom,
+                    self.start.1 + t * self.delta.1 / denom,
+                ));
+            }
         }
     }
 }
 
-impl Iterator for Line {
-    type Item = (i32, i32);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        (self.start != self.end).then(|| {
-            let point = self.start;
-            self.start.0 += self.delta.0;
-            self.start.1 += self.delta.1;
-            point
-        })
-    }
-}
-
-fn count_overlaps<'a>(lines: impl Iterator<Item = &'a Line>) -> usize {
-    lines.flat_map(|&line| line).duplicates().count()
+fn count_overlaps<'a>(lines: impl Clone + Iterator<Item = &'a Line>) -> usize {
+    let mut overlaps = HashSet::new();
+    lines
+        .tuple_combinations::<(_, _)>()
+        .for_each(|ls| ls.0.for_overlaps(ls.1, |p| overlaps.insert(p).ignore()));
+    overlaps.len()
 }
 
 pub struct Day05;

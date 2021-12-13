@@ -6,6 +6,12 @@ use std::{
     ops::AddAssign,
 };
 
+pub trait Ignore: Sized {
+    fn ignore(self) {}
+}
+
+impl<T> Ignore for T {}
+
 pub trait CollectArray<T, U: Default + AsMut<[T]>>: Sized + Iterator<Item = T> {
     fn collect_array(self) -> U {
         let mut array = U::default();
