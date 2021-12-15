@@ -1,16 +1,42 @@
+#![feature(test)]
 #![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
+
+extern crate test;
 
 mod day;
 mod util;
 
 use day::Day;
-use paste::paste;
 use std::env;
+
+#[macro_export]
+macro_rules! bench_day {
+    ($day:literal) => {
+        paste::paste! {
+            #[cfg(test)]
+            mod bench {
+                use super::{super::day::Day, [<Day $day>]};
+                use test::Bencher;
+
+                #[bench]
+                fn [<bench_day $day _overall>] (b: &mut Bencher) {
+                    let input = [<Day $day>]::get_input().unwrap();
+                    b.iter(|| {
+                        let input = [<Day $day>]::parse(&input);
+                        let (input, part1) = [<Day $day>]::solve_part1(input);
+                        let part2 = [<Day $day>]::solve_part2(input);
+                        (part1, part2)
+                    })
+                }
+            }
+        }
+    };
+}
 
 macro_rules! import_days {
     ($day:literal) => {
-        paste! {
+        paste::paste! {
             mod [<day $day>];
             use [<day $day>]::[<Day $day>];
         }
@@ -23,7 +49,7 @@ macro_rules! import_days {
 
 macro_rules! solve {
     ($day:literal) => {{
-        paste! {
+        paste::paste! {
             match [<Day $day>]::get_input() {
                 Ok(input) => [<Day $day>]::solve_and_print(&input),
                 Err(err) => eprintln!("{}", err),

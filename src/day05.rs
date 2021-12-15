@@ -97,3 +97,5 @@ impl<'a> Day<'a> for Day05 {
         count_overlaps(lines.iter()).to_string()
     }
 }
+
+bench_day!(05);

@@ -57,3 +57,5 @@ impl<'a> Day<'a> for Day08 {
             .to_string()
     }
 }
+
+bench_day!(08);

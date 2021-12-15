@@ -94,3 +94,5 @@ impl<'a> Day<'a> for Day12 {
         completions(Vec::new(), &small_edges, true).to_string()
     }
 }
+
+bench_day!(12);

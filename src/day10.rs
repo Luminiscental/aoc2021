@@ -40,3 +40,5 @@ impl<'a> Day<'a> for Day10 {
         util::qselect(scores.len() / 2, &mut scores).to_string()
     }
 }
+
+bench_day!(10);

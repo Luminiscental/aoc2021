@@ -52,3 +52,5 @@ impl<'a> Day<'a> for Day14 {
         diversity(last, &polymer).to_string()
     }
 }
+
+bench_day!(14);

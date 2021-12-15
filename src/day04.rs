@@ -82,3 +82,5 @@ impl<'a> Day<'a> for Day04 {
         scores.last().unwrap().to_string()
     }
 }
+
+bench_day!(04);

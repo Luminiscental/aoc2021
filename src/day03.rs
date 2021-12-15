@@ -50,3 +50,5 @@ impl<'a> Day<'a> for Day03 {
         (generator * scrubber).to_string()
     }
 }
+
+bench_day!(03);

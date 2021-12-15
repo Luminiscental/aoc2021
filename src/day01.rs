@@ -29,3 +29,5 @@ impl<'a> Day<'a> for Day01 {
         convoluted_increases(&depths, 3).to_string()
     }
 }
+
+bench_day!(01);

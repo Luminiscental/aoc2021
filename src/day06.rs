@@ -34,6 +34,8 @@ impl<'a> Day<'a> for Day06 {
     }
 }
 
+bench_day!(06);
+
 /*
  * Alternate solution:
  *

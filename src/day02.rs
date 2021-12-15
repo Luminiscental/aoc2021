@@ -45,3 +45,5 @@ impl<'a> Day<'a> for Day02 {
         (hor * ver).to_string()
     }
 }
+
+bench_day!(02);

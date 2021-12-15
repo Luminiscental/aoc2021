@@ -40,6 +40,8 @@ impl<'a> Day<'a> for Day07 {
     }
 }
 
+bench_day!(07);
+
 /*
  * part1:
  *   We're minimizing f(x) = \sum|h-x| over heights h of the crabs. It's a well-

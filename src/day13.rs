@@ -70,3 +70,5 @@ impl<'a> Day<'a> for Day13 {
         (0..=7).map(|i| decode(i, &grid)).collect()
     }
 }
+
+bench_day!(13);
