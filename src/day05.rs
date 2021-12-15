@@ -1,6 +1,5 @@
-use super::{day::Day, util::Ignore};
+use super::{day::Day, util::BitSet};
 use itertools::Itertools;
-use std::collections::HashSet;
 
 pub struct Line {
     start: (i32, i32),
@@ -68,10 +67,11 @@ impl Line {
 }
 
 fn count_overlaps<'a>(lines: impl Clone + Iterator<Item = &'a Line>) -> usize {
-    let mut overlaps = HashSet::new();
-    lines
-        .tuple_combinations::<(_, _)>()
-        .for_each(|ls| ls.0.for_overlaps(ls.1, |p| overlaps.insert(p).ignore()));
+    let mut overlaps = BitSet::new();
+    let pack = |(x, y)| (x + y * 1000) as usize;
+    for (line, other_line) in lines.tuple_combinations() {
+        line.for_overlaps(other_line, |point| overlaps.insert(pack(point)));
+    }
     overlaps.len()
 }
 

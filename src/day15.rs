@@ -1,22 +1,22 @@
-use super::{day::Day, util};
+use super::{
+    day::Day,
+    util::{self, BitSet},
+};
 use priority_queue::PriorityQueue;
 use std::cmp::Reverse;
 
 /// dijkstra with cost reduced by manhattan distance (aka A*)
 fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
+    let pack = |(x, y)| (x + y * width) as usize;
     let mut queue = PriorityQueue::new();
-    let mut seen = vec![0u64; ((width * width + 63) / 64) as usize];
+    let mut seen = BitSet::with_capacity((width * width) as usize);
     queue.push((0, 0), Reverse(0));
     while let Some((pos, Reverse(cost))) = queue.pop() {
         if pos == (width - 1, width - 1) {
             return Some(2 * (width - 1) + cost);
         }
-        let packed = (pos.0 + pos.1 * width) as usize;
-        seen[packed / 64] |= 1 << (packed % 64);
-        for n in util::grid_neighbours(pos, width, width).filter(|n| {
-            let packed = (n.0 + n.1 * width) as usize;
-            seen[packed / 64] & 1 << (packed % 64) == 0
-        }) {
+        seen.insert(pack(pos));
+        for n in util::grid_neighbours(pos, width, width).filter(|&n| !seen.contains(pack(n))) {
             queue.push_increase(n, Reverse(cost + risk(n) + pos.0 + pos.1 - n.0 - n.1));
         }
     }
