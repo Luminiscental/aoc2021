@@ -95,4 +95,70 @@ impl<'a> Day<'a> for Day12 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    // modified to have double character caves
+    const SMALL_EXAMPLE: &str = indoc! {"
+        start-AA
+        start-bb
+        AA-cc
+        AA-bb
+        bb-dd
+        AA-end
+        bb-end
+    "};
+
+    const MEDIUM_EXAMPLE: &str = indoc! {"
+        dc-end
+        HN-start
+        start-kj
+        dc-start
+        dc-HN
+        LN-dc
+        HN-end
+        kj-sa
+        kj-HN
+        kj-dc
+    "};
+
+    const LARGE_EXAMPLE: &str = indoc! {"
+        fs-end
+        he-DX
+        fs-he
+        start-DX
+        pj-DX
+        end-zg
+        zg-sl
+        zg-pj
+        pj-he
+        RW-he
+        fs-DX
+        pj-RW
+        zg-RW
+        start-pj
+        he-WI
+        zg-he
+        pj-fs
+        start-RW
+    "};
+
+    fn assert_example(example: &str, output1: &str, output2: &str) {
+        let input = Day12::parse(example);
+        let (input, part1) = Day12::solve_part1(input);
+        let part2 = Day12::solve_part2(input);
+        assert_eq!(part1, output1);
+        assert_eq!(part2, output2);
+    }
+
+    #[test]
+    fn test_day12_examples() {
+        assert_example(SMALL_EXAMPLE, "10", "36");
+        assert_example(MEDIUM_EXAMPLE, "19", "103");
+        assert_example(LARGE_EXAMPLE, "226", "3509");
+    }
+}
+
 bench_day!(12);

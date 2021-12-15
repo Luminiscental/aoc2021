@@ -51,4 +51,34 @@ impl<'a> Day<'a> for Day03 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        00100
+        11110
+        10110
+        10111
+        10101
+        01111
+        00111
+        11100
+        10000
+        11001
+        00010
+        01010
+    "};
+
+    #[test]
+    fn test_day03_examples() {
+        let input = Day03::parse(EXAMPLE);
+        let (input, part1) = Day03::solve_part1(input);
+        let part2 = Day03::solve_part2(input);
+        assert_eq!(part1, "198");
+        assert_eq!(part2, "230");
+    }
+}
+
 bench_day!(03);

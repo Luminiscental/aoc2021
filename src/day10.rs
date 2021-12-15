@@ -41,4 +41,32 @@ impl<'a> Day<'a> for Day10 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        [({(<(())[]>[[{[]{<()<>>
+        [(()[<>])]({[<{<<[]>>(
+        {([(<{}[<>[]}>{[]{[(<()>
+        (((({<>}<{<{<>}{[]{[]{}
+        [[<[([]))<([[{}[[()]]]
+        [{[{({}]{}}([{[{{{}}([]
+        {<[[]]>}<{[{[{[]{()[[[]
+        [<(<(<(<{}))><([]([]()
+        <{([([[(<>()){}]>(<<{{
+        <{([{{}}[<[[[<>{}]]]>[]]
+    "};
+
+    #[test]
+    fn test_day10_examples() {
+        let input = Day10::parse(EXAMPLE);
+        let (input, part1) = Day10::solve_part1(input);
+        let part2 = Day10::solve_part2(input);
+        assert_eq!(part1, "26397");
+        assert_eq!(part2, "288957");
+    }
+}
+
 bench_day!(10);

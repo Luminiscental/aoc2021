@@ -71,4 +71,32 @@ impl<'a> Day<'a> for Day11 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        5483143223
+        2745854711
+        5264556173
+        6141336146
+        6357385478
+        4167524645
+        2176841721
+        6882881134
+        4846848554
+        5283751526
+    "};
+
+    #[test]
+    fn test_day11_examples() {
+        let input = Day11::parse(EXAMPLE);
+        let (input, part1) = Day11::solve_part1(input);
+        let part2 = Day11::solve_part2(input);
+        assert_eq!(part1, "1656");
+        assert_eq!(part2, "195");
+    }
+}
+
 bench_day!(11);

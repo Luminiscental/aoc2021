@@ -54,7 +54,10 @@ impl Line {
                 + self.end.0 * (self.start.1 - o.start.1)
                 + o.start.0 * self.delta.1);
             let inside = |t| (0 <= t && t <= denom) || (denom <= t && t <= 0);
-            let exact = self.delta.0 * self.delta.1 * o.delta.0 * o.delta.1 == 0
+            let exact = self.delta.0 == 0
+                || self.delta.1 == 0
+                || o.delta.0 == 0
+                || o.delta.1 == 0
                 || ((t * self.delta.0 % denom == 0) && (s * o.delta.0 % denom == 0));
             if inside(t) && inside(s) && exact {
                 f((
@@ -95,6 +98,34 @@ impl<'a> Day<'a> for Day05 {
 
     fn solve_part2(lines: Self::ProcessedInput) -> String {
         count_overlaps(lines.iter()).to_string()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        0,9 -> 5,9
+        8,0 -> 0,8
+        9,4 -> 3,4
+        2,2 -> 2,1
+        7,0 -> 7,4
+        6,4 -> 2,0
+        0,9 -> 2,9
+        3,4 -> 1,4
+        0,0 -> 8,8
+        5,5 -> 8,2
+    "};
+
+    #[test]
+    fn test_day05_examples() {
+        let input = Day05::parse(EXAMPLE);
+        let (input, part1) = Day05::solve_part1(input);
+        let part2 = Day05::solve_part2(input);
+        assert_eq!(part1, "5");
+        assert_eq!(part2, "12");
     }
 }
 

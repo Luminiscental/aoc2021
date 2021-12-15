@@ -34,6 +34,22 @@ impl<'a> Day<'a> for Day06 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const EXAMPLE: &str = "3,4,3,1,2";
+
+    #[test]
+    fn test_day06_examples() {
+        let input = Day06::parse(EXAMPLE);
+        let (input, part1) = Day06::solve_part1(input);
+        let part2 = Day06::solve_part2(input);
+        assert_eq!(part1, "5934");
+        assert_eq!(part2, "26984457539");
+    }
+}
+
 bench_day!(06);
 
 /*

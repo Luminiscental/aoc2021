@@ -46,4 +46,20 @@ impl<'a> Day<'a> for Day02 {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const EXAMPLE: &str = "forward 5\ndown 5\nforward 8\nup 3\ndown 8\nforward 2";
+
+    #[test]
+    fn test_day02_examples() {
+        let input = Day02::parse(EXAMPLE);
+        let (input, part1) = Day02::solve_part1(input);
+        let part2 = Day02::solve_part2(input);
+        assert_eq!(part1, "150");
+        assert_eq!(part2, "900");
+    }
+}
+
 bench_day!(02);
