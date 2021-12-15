@@ -1,4 +1,4 @@
-use super::{day::Day, util};
+use crate::{day::Day, util};
 use itertools::{iproduct, Itertools};
 
 fn adjacents<const WIDTH: usize, const HEIGHT: usize>(
@@ -55,7 +55,7 @@ impl<'a, const WIDTH: usize, const HEIGHT: usize> Day<'a> for Day09Generic<WIDTH
 }
 
 #[cfg(test)]
-mod test {
+mod test_day09 {
     use super::*;
     use indoc::indoc;
 

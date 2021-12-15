@@ -1,4 +1,4 @@
-use super::day::Day;
+use crate::day::Day;
 
 pub struct Day01;
 
@@ -31,7 +31,7 @@ impl<'a> Day<'a> for Day01 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day01 {
     use super::*;
 
     const EXAMPLE: &str = "199\n200\n208\n210\n200\n207\n240\n269\n260\n263";

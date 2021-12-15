@@ -1,4 +1,4 @@
-use super::{day::Day, util::CollectArray};
+use crate::{day::Day, util::CollectArray};
 use itertools::Itertools;
 use std::{
     collections::{HashSet, VecDeque},
@@ -72,7 +72,7 @@ impl<'a> Day<'a> for Day13 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day13 {
     use super::*;
     use indoc::indoc;
 

@@ -1,4 +1,4 @@
-use super::{
+use crate::{
     day::Day,
     util::{self, Summation},
 };
@@ -42,7 +42,7 @@ impl<'a> Day<'a> for Day10 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day10 {
     use super::*;
     use indoc::indoc;
 

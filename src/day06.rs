@@ -1,4 +1,4 @@
-use super::day::Day;
+use crate::day::Day;
 
 pub struct Day06;
 
@@ -35,7 +35,7 @@ impl<'a> Day<'a> for Day06 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day06 {
     use super::*;
 
     const EXAMPLE: &str = "3,4,3,1,2";

@@ -1,4 +1,4 @@
-use super::day::Day;
+use crate::day::Day;
 
 fn for_adjacents<F: FnMut(usize)>(i: usize, mut f: F) {
     macro_rules! for_each {
@@ -72,7 +72,7 @@ impl<'a> Day<'a> for Day11 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day11 {
     use super::*;
     use indoc::indoc;
 

@@ -1,4 +1,4 @@
-use super::{day::Day, util::BitSet};
+use crate::{day::Day, util::BitSet};
 use itertools::Itertools;
 
 pub struct Line {
@@ -102,7 +102,7 @@ impl<'a> Day<'a> for Day05 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day05 {
     use super::*;
     use indoc::indoc;
 

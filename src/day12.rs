@@ -1,4 +1,4 @@
-use super::day::Day;
+use crate::day::Day;
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -96,7 +96,7 @@ impl<'a> Day<'a> for Day12 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day12 {
     use super::*;
     use indoc::indoc;
 

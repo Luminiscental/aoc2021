@@ -1,4 +1,4 @@
-use super::{
+use crate::{
     day::Day,
     util::{self, BitSet},
 };
@@ -60,7 +60,7 @@ impl<'a> Day<'a> for Day15 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day15 {
     use super::*;
     use indoc::indoc;
 

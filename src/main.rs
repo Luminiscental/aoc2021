@@ -15,8 +15,9 @@ macro_rules! bench_day {
     ($day:literal) => {
         paste::paste! {
             #[cfg(test)]
-            mod bench {
-                use super::{super::day::Day, [<Day $day>]};
+            mod [<bench_day $day>] {
+                use crate::day::Day;
+                use super::*;
                 use test::Bencher;
 
                 #[bench]

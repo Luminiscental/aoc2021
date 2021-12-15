@@ -1,4 +1,4 @@
-use super::day::Day;
+use crate::day::Day;
 
 use itertools::Itertools;
 
@@ -47,7 +47,7 @@ impl<'a> Day<'a> for Day02 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day02 {
     use super::*;
 
     const EXAMPLE: &str = "forward 5\ndown 5\nforward 8\nup 3\ndown 8\nforward 2";

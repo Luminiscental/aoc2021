@@ -1,4 +1,4 @@
-use super::{day::Day, util};
+use crate::{day::Day, util};
 
 fn most_common_bit(values: &[usize], pos: usize) -> usize {
     let ones = values.iter().filter(|&n| (n >> pos) & 1 != 0).count();
@@ -52,7 +52,7 @@ impl<'a> Day<'a> for Day03 {
 }
 
 #[cfg(test)]
-mod test {
+mod test_day03 {
     use super::*;
     use indoc::indoc;
 
