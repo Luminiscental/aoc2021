@@ -1,26 +1,38 @@
-use super::day::Day;
-use std::collections::HashSet;
+use super::{day::Day, util};
+use std::{cmp::Ordering, collections::BinaryHeap};
 
-/// dijkstra with cost reduced by distance (aka A*)
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Node((u32, u32), u32);
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.1.cmp(&other.1).reverse()
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// dijkstra with cost reduced by manhattan distance (aka A*)
 fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
-    let distance = |(x, y)| 2 * width - 2 - x - y;
-    let neighbours = |(x, y): (u32, u32)| {
-        [(1, 0), (0, 1), (u32::MAX, 0), (0, u32::MAX)]
-            .iter()
-            .map(move |d| (x.wrapping_add(d.0), y.wrapping_add(d.1)))
-            .filter(|&p| p.0 < width && p.1 < width)
-    };
-    let mut queue = vec![((0, 0), 0)];
-    let mut seen = HashSet::new();
-    while let Some((pos, cost)) = queue.pop() {
+    let mut queue = BinaryHeap::new();
+    let mut seen = vec![0u64; ((width * width + 63) / 64) as usize];
+    queue.push(Node((0, 0), 0));
+    while let Some(Node(pos, cost)) = queue.pop() {
         if pos == (width - 1, width - 1) {
-            return Some(distance((0, 0)) + cost);
+            return Some(2 * (width - 1) + cost);
         }
-        seen.insert(pos);
-        for n in neighbours(pos).filter(|n| !seen.contains(n)) {
-            queue.push((n, cost + risk(n) + distance(n) - distance(pos)));
+        let packed = (pos.0 + pos.1 * width) as usize;
+        seen[packed / 64] |= 1 << (packed % 64);
+        for n in util::grid_neighbours(pos, width, width).filter(|n| {
+            let packed = (n.0 + n.1 * width) as usize;
+            seen[packed / 64] & 1 << (packed % 64) == 0
+        }) {
+            queue.push(Node(n, cost + risk(n) + pos.0 + pos.1 - (n.0 + n.1)));
         }
-        queue.sort_unstable_by_key(|&(_, cost)| u32::MAX - cost);
     }
     None
 }
