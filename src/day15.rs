@@ -1,27 +1,13 @@
 use super::{day::Day, util};
-use std::{cmp::Ordering, collections::BinaryHeap};
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Node((u32, u32), u32);
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.1.cmp(&other.1).reverse()
-    }
-}
-
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+use priority_queue::PriorityQueue;
+use std::cmp::Reverse;
 
 /// dijkstra with cost reduced by manhattan distance (aka A*)
 fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
-    let mut queue = BinaryHeap::new();
+    let mut queue = PriorityQueue::new();
     let mut seen = vec![0u64; ((width * width + 63) / 64) as usize];
-    queue.push(Node((0, 0), 0));
-    while let Some(Node(pos, cost)) = queue.pop() {
+    queue.push((0, 0), Reverse(0));
+    while let Some((pos, Reverse(cost))) = queue.pop() {
         if pos == (width - 1, width - 1) {
             return Some(2 * (width - 1) + cost);
         }
@@ -31,7 +17,7 @@ fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
             let packed = (n.0 + n.1 * width) as usize;
             seen[packed / 64] & 1 << (packed % 64) == 0
         }) {
-            queue.push(Node(n, cost + risk(n) + pos.0 + pos.1 - (n.0 + n.1)));
+            queue.push_increase(n, Reverse(cost + risk(n) + pos.0 + pos.1 - n.0 - n.1));
         }
     }
     None
