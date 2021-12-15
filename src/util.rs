@@ -13,10 +13,6 @@ impl BitSet {
         Self(Vec::new())
     }
 
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self(vec![0; ((capacity + 63) / 64) as usize])
-    }
-
     pub fn len(&self) -> usize {
         self.0.iter().map(|block| block.count_ones() as usize).sum()
     }
@@ -28,11 +24,6 @@ impl BitSet {
                 .extend(iter::repeat(0).take(1 + chunk - self.0.len()));
         }
         self.0[chunk] |= 1 << index;
-    }
-
-    pub fn contains(&self, value: usize) -> bool {
-        let (chunk, index) = (value / 64, value % 64);
-        chunk < self.0.len() && self.0[chunk] & 1 << index != 0
     }
 }
 

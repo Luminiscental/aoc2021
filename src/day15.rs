@@ -1,23 +1,25 @@
-use crate::{
-    day::Day,
-    util::{self, BitSet},
-};
-use priority_queue::PriorityQueue;
-use std::cmp::Reverse;
+use crate::{day::Day, util};
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 /// dijkstra with cost reduced by manhattan distance (aka A*)
 fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
     let pack = |(x, y)| (x + y * width) as usize;
-    let mut queue = PriorityQueue::new();
-    let mut seen = BitSet::with_capacity((width * width) as usize);
-    queue.push((0, 0), Reverse(0));
-    while let Some((pos, Reverse(cost))) = queue.pop() {
+    let mut queue = BinaryHeap::new();
+    let mut costs = vec![u32::MAX; (width * width) as usize];
+    queue.push((Reverse(0), (0, 0)));
+    costs[0] = 0;
+    while let Some((Reverse(cost), pos)) = queue.pop() {
         if pos == (width - 1, width - 1) {
             return Some(2 * (width - 1) + cost);
+        } else if cost > costs[pack(pos)] {
+            continue;
         }
-        seen.insert(pack(pos));
-        for n in util::grid_neighbours(pos, width, width).filter(|&n| !seen.contains(pack(n))) {
-            queue.push_increase(n, Reverse(cost + risk(n) + pos.0 + pos.1 - n.0 - n.1));
+        for n in util::grid_neighbours(pos, width, width) {
+            let n_cost = cost + risk(n) + pos.0 + pos.1 - n.0 - n.1;
+            if n_cost < costs[pack(n)] {
+                costs[pack(n)] = n_cost;
+                queue.push((Reverse(n_cost), n));
+            }
         }
     }
     None
@@ -47,15 +49,17 @@ impl<'a> Day<'a> for Day15 {
     }
 
     fn solve_part2((width, grid): Self::ProcessedInput) -> String {
-        grid_search(
-            |(x, y)| {
-                let base_cost = grid[((x % width) + (y % width) * width) as usize];
-                1 + (x / width + y / width + base_cost - 1) % 9
-            },
-            5 * width,
-        )
-        .unwrap()
-        .to_string()
+        let new_risk = |x, y| {
+            let base_cost = grid[((x % width) + (y % width) * width) as usize];
+            1 + (x / width + y / width + base_cost - 1) % 9
+        };
+        let width = 5 * width;
+        let grid = (0..width)
+            .flat_map(|y| (0..width).map(move |x| new_risk(x, y)))
+            .collect::<Vec<_>>();
+        grid_search(|(x, y)| grid[(x + y * width) as usize], width)
+            .unwrap()
+            .to_string()
     }
 }
 
