@@ -1,7 +1,6 @@
 use crate::{day::Day, util};
 use std::{cmp::Reverse, collections::BinaryHeap};
 
-/// dijkstra with cost reduced by manhattan distance (aka A*)
 fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
     let pack = |(x, y)| (x + y * width) as usize;
     let mut queue = BinaryHeap::new();
@@ -10,12 +9,12 @@ fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
     costs[0] = 0;
     while let Some((Reverse(cost), pos)) = queue.pop() {
         if pos == (width - 1, width - 1) {
-            return Some(2 * (width - 1) + cost);
+            return Some(cost);
         } else if cost > costs[pack(pos)] {
             continue;
         }
         for n in util::grid_neighbours(pos, width, width) {
-            let n_cost = cost + risk(n) + pos.0 + pos.1 - n.0 - n.1;
+            let n_cost = cost + risk(n);
             if n_cost < costs[pack(n)] {
                 costs[pack(n)] = n_cost;
                 queue.push((Reverse(n_cost), n));
