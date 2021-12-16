@@ -105,20 +105,6 @@ impl<'a> Day<'a> for Day16 {
 mod test_day16 {
     use super::*;
 
-    // 100010100000000001001010100000000001101010000000000000101111010001111000
-    // VVVTTTILLLLLLLLLLL
-    const EXAMPLE1_1: &str = "8A004A801A8002F478";
-    const EXAMPLE1_2: &str = "620080001611562C8802118E34";
-    const EXAMPLE1_3: &str = "C0015000016115A2E0802F182340";
-    const EXAMPLE1_4: &str = "A0016C880162017C3686B18A3D4780";
-    const EXAMPLE2_1: &str = "C200B40A82";
-    const EXAMPLE2_2: &str = "04005AC33890";
-    const EXAMPLE2_3: &str = "CE00C43D881120";
-    const EXAMPLE2_4: &str = "D8005AC2A8F0";
-    const EXAMPLE2_5: &str = "F600BC2D8F";
-    const EXAMPLE2_6: &str = "9C005AC2F8F0";
-    const EXAMPLE2_7: &str = "9C0141080250320F1802104A08";
-
     fn assert_part1(example: &str, output: &str) {
         let input = Day16::parse(example);
         let (_, part1) = Day16::solve_part1(input);
@@ -134,17 +120,18 @@ mod test_day16 {
 
     #[test]
     fn test_day16_examples() {
-        assert_part1(EXAMPLE1_1, "16");
-        assert_part1(EXAMPLE1_2, "12");
-        assert_part1(EXAMPLE1_3, "23");
-        assert_part1(EXAMPLE1_4, "31");
-        assert_part2(EXAMPLE2_1, "3");
-        assert_part2(EXAMPLE2_2, "54");
-        assert_part2(EXAMPLE2_3, "9");
-        assert_part2(EXAMPLE2_4, "1");
-        assert_part2(EXAMPLE2_5, "0");
-        assert_part2(EXAMPLE2_6, "0");
-        assert_part2(EXAMPLE2_7, "1");
+        assert_part1("8A004A801A8002F478", "16");
+        assert_part1("620080001611562C8802118E34", "12");
+        assert_part1("C0015000016115A2E0802F182340", "23");
+        assert_part1("A0016C880162017C3686B18A3D4780", "31");
+
+        assert_part2("C200B40A82", "3");
+        assert_part2("04005AC33890", "54");
+        assert_part2("CE00C43D881120", "9");
+        assert_part2("D8005AC2A8F0", "1");
+        assert_part2("F600BC2D8F", "0");
+        assert_part2("9C005AC2F8F0", "0");
+        assert_part2("9C0141080250320F1802104A08", "1");
     }
 }
 
