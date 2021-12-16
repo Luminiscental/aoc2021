@@ -1,19 +1,6 @@
 use crate::day::Day;
 use itertools::Itertools;
 
-fn apply_operation(type_id: u8, mut values: impl Iterator<Item = u64>) -> u64 {
-    match type_id {
-        0 => values.sum(),
-        1 => values.product(),
-        2 => values.min().unwrap(),
-        3 => values.max().unwrap(),
-        5 => values.next_tuple().map(|(a, b)| a > b).unwrap().into(),
-        6 => values.next_tuple().map(|(a, b)| a < b).unwrap().into(),
-        7 => values.next_tuple().map(|(a, b)| a == b).unwrap().into(),
-        _ => panic!("Unexpected type id: {}", type_id),
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Packet {
     Literal(u8, u64),
@@ -68,7 +55,15 @@ impl Packet {
     fn evaluate(&self) -> u64 {
         match self {
             Self::Literal(_, n) => *n,
-            Self::Operator(_, op, ps) => apply_operation(*op, ps.iter().map(Self::evaluate)),
+            Self::Operator(_, op, packets) => match (op, packets.iter().map(Self::evaluate)) {
+                (0, values) => values.sum(),
+                (1, values) => values.product(),
+                (2, values) => values.min().unwrap(),
+                (3, values) => values.max().unwrap(),
+                (5, mut values) => values.next_tuple().map(|(a, b)| a > b).unwrap().into(),
+                (6, mut values) => values.next_tuple().map(|(a, b)| a < b).unwrap().into(),
+                (_, mut values) => values.next_tuple().map(|(a, b)| a == b).unwrap().into(),
+            },
         }
     }
 }
