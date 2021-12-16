@@ -1,10 +1,27 @@
 use std::{
     cmp::Ordering,
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
+    convert::TryInto,
+    fmt::Debug,
     hash::Hash,
     iter::{self, Sum},
     ops::AddAssign,
 };
+
+pub trait CastValues<K, V> {
+    fn cast_values(self) -> HashMap<K, V>;
+}
+
+impl<K: Eq + Hash, V, W: TryInto<V>> CastValues<K, V> for HashMap<K, W>
+where
+    <W as TryInto<V>>::Error: Debug,
+{
+    fn cast_values(self) -> HashMap<K, V> {
+        self.into_iter()
+            .map(|(key, value)| (key, value.try_into().unwrap()))
+            .collect()
+    }
+}
 
 pub struct BitSet(Vec<u64>);
 
@@ -17,8 +34,8 @@ impl BitSet {
         self.0.iter().map(|block| block.count_ones() as usize).sum()
     }
 
-    pub fn insert(&mut self, value: usize) {
-        let (chunk, index) = (value / 64, value % 64);
+    pub fn insert(&mut self, value: u32) {
+        let (chunk, index) = ((value / 64) as usize, (value % 64) as usize);
         if chunk >= self.0.len() {
             self.0
                 .extend(iter::repeat(0).take(1 + chunk - self.0.len()));
@@ -124,7 +141,7 @@ impl<T, U> DrainFilterMappable<T, U> for Vec<T> {
     }
 }
 
-pub fn unradix(rev_digits: impl Iterator<Item = usize>, radix: usize) -> usize {
+pub fn unradix(rev_digits: impl Iterator<Item = u64>, radix: u64) -> u64 {
     rev_digits
         .zip(itertools::iterate(1, |i| radix * i))
         .map(|p| p.0 * p.1)

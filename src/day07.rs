@@ -3,7 +3,7 @@ use crate::{day::Day, util};
 pub struct Day07;
 
 impl<'a> Day<'a> for Day07 {
-    type Input = Vec<usize>;
+    type Input = Vec<u32>;
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 7;
@@ -18,13 +18,13 @@ impl<'a> Day<'a> for Day07 {
 
     fn solve_part1(mut heights: Self::Input) -> (Self::ProcessedInput, String) {
         let argmin = *util::qselect(heights.len() / 2, &mut heights);
-        let fuel = heights.iter().map(|h| h.abs_diff(argmin)).sum::<usize>();
+        let fuel = heights.iter().map(|h| h.abs_diff(argmin)).sum::<u32>();
         (heights, fuel.to_string())
     }
 
     fn solve_part2(heights: Self::ProcessedInput) -> String {
         let rounded_mean =
-            (heights.iter().sum::<usize>() as f32 / heights.len() as f32).round() as usize;
+            (heights.iter().sum::<u32>() as f32 / heights.len() as f32).round() as u32;
         [rounded_mean - 1, rounded_mean, rounded_mean + 1]
             .iter()
             .map(|&candidate| {
@@ -32,7 +32,7 @@ impl<'a> Day<'a> for Day07 {
                     .iter()
                     .map(|h| h.abs_diff(candidate))
                     .map(|n| n * (n + 1) / 2)
-                    .sum::<usize>()
+                    .sum::<u32>()
             })
             .min()
             .unwrap()

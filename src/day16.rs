@@ -1,4 +1,4 @@
-use crate::{day::Day, util};
+use crate::day::Day;
 use itertools::Itertools;
 
 fn apply_operation(type_id: u8, mut values: impl Iterator<Item = u64>) -> u64 {
@@ -22,8 +22,12 @@ pub enum Packet {
 
 impl Packet {
     fn parse<I: Iterator<Item = u8>>(bits: &mut I) -> (usize, Self) {
-        let take_number =
-            |n, bits: &mut I| util::unradix((0..n).map(|_| bits.next().unwrap() as u64), 2);
+        let take_number = |n, bits: &mut I| {
+            (0..n)
+                .rev()
+                .map(|i| (bits.next().unwrap() as u64) << i)
+                .sum::<u64>()
+        };
         let version = take_number(3, bits) as u8;
         let type_id = take_number(3, bits) as u8;
         match type_id {
@@ -31,7 +35,7 @@ impl Packet {
                 let (mut size, mut literal) = (6, 0);
                 while let Some(flag) = bits.next() {
                     literal = 16 * literal + take_number(4, bits);
-                    size += 4;
+                    size += 5;
                     if flag == 0 {
                         break;
                     }
@@ -81,7 +85,7 @@ impl<'a> Day<'a> for Day16 {
         Packet::parse(
             &mut input
                 .chars()
-                .map(|c| c.to_digit(16).unwrap())
+                .filter_map(|c| c.to_digit(16))
                 .flat_map(|n| (0..4).rev().map(move |i| ((n >> i) & 1) as u8)),
         )
         .1
@@ -101,6 +105,8 @@ impl<'a> Day<'a> for Day16 {
 mod test_day16 {
     use super::*;
 
+    // 100010100000000001001010100000000001101010000000000000101111010001111000
+    // VVVTTTILLLLLLLLLLL
     const EXAMPLE1_1: &str = "8A004A801A8002F478";
     const EXAMPLE1_2: &str = "620080001611562C8802118E34";
     const EXAMPLE1_3: &str = "C0015000016115A2E0802F182340";

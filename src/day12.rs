@@ -7,7 +7,7 @@ type Cave = [u8; 2];
 const START: Cave = [0, 0];
 const END: Cave = [!0, !0];
 
-fn calculate_weights(edges: HashMap<Cave, Vec<Cave>>) -> HashMap<Cave, HashMap<Cave, usize>> {
+fn calculate_weights(edges: HashMap<Cave, Vec<Cave>>) -> HashMap<Cave, HashMap<Cave, u32>> {
     let mut weighted_edges = HashMap::new();
     let mut add_edge = |start, end| {
         *weighted_edges
@@ -35,9 +35,9 @@ fn calculate_weights(edges: HashMap<Cave, Vec<Cave>>) -> HashMap<Cave, HashMap<C
 
 fn completions(
     path: Vec<Cave>,
-    small_edges: &HashMap<Cave, HashMap<Cave, usize>>,
+    small_edges: &HashMap<Cave, HashMap<Cave, u32>>,
     allow_dups: bool,
-) -> usize {
+) -> u32 {
     small_edges[path.last().unwrap_or(&START)]
         .iter()
         .map(|(&cave, &weight)| {
@@ -57,7 +57,7 @@ fn completions(
 pub struct Day12;
 
 impl<'a> Day<'a> for Day12 {
-    type Input = HashMap<Cave, HashMap<Cave, usize>>;
+    type Input = HashMap<Cave, HashMap<Cave, u32>>;
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 12;

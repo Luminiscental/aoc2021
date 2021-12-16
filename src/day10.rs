@@ -17,7 +17,7 @@ impl<'a> Day<'a> for Day10 {
     }
 
     fn solve_part1(lines: Self::Input) -> (Self::ProcessedInput, String) {
-        fn validate(line: &str) -> Result<String, usize> {
+        fn validate(line: &str) -> Result<String, u32> {
             let mut stack = Vec::new();
             for c in line.chars() {
                 if let Some(i) = "([{<".find(c) {
@@ -35,7 +35,7 @@ impl<'a> Day<'a> for Day10 {
     fn solve_part2(completions: Self::ProcessedInput) -> String {
         let mut scores = completions
             .into_iter()
-            .map(|s| util::unradix(s.chars().map(|c| 1 + ")]}>".find(c).unwrap()), 5))
+            .map(|s| util::unradix(s.chars().map(|c| 1 + ")]}>".find(c).unwrap() as u64), 5))
             .collect::<Vec<_>>();
         util::qselect(scores.len() / 2, &mut scores).to_string()
     }

@@ -71,7 +71,7 @@ impl Line {
 
 fn count_overlaps<'a>(lines: impl Clone + Iterator<Item = &'a Line>) -> usize {
     let mut overlaps = BitSet::new();
-    let pack = |(x, y)| (x + y * 1000) as usize;
+    let pack = |(x, y)| (x + y * 1000) as u32;
     for (line, other_line) in lines.tuple_combinations() {
         line.for_overlaps(other_line, |point| overlaps.insert(pack(point)));
     }

@@ -1,17 +1,17 @@
-use crate::day::Day;
+use crate::{day::Day, util::CastValues};
 use itertools::Itertools;
 use std::{collections::HashMap, iter, mem};
 
 type Pair = (u8, u8);
 
-fn reinforce(polymer: &mut HashMap<Pair, usize>, rules: &HashMap<Pair, u8>) {
+fn reinforce(polymer: &mut HashMap<Pair, u64>, rules: &HashMap<Pair, u8>) {
     for (pair, count) in mem::take(polymer).into_iter() {
         *polymer.entry((pair.0, rules[&pair])).or_insert(0) += count;
         *polymer.entry((rules[&pair], pair.1)).or_insert(0) += count;
     }
 }
 
-fn diversity(last: u8, polymer: &HashMap<Pair, usize>) -> usize {
+fn diversity(last: u8, polymer: &HashMap<Pair, u64>) -> u64 {
     let mut counts = HashMap::new();
     for (pair, count) in polymer.iter().chain(iter::once((&(last, 0), &1))) {
         *counts.entry(pair.0).or_insert(0) += count;
@@ -23,7 +23,7 @@ fn diversity(last: u8, polymer: &HashMap<Pair, usize>) -> usize {
 pub struct Day14;
 
 impl<'a> Day<'a> for Day14 {
-    type Input = (u8, HashMap<Pair, usize>, HashMap<Pair, u8>);
+    type Input = (u8, HashMap<Pair, u64>, HashMap<Pair, u8>);
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 14;
@@ -32,7 +32,7 @@ impl<'a> Day<'a> for Day14 {
         let (template, rules) = input.split("\n\n").next_tuple().unwrap();
         (
             template.bytes().last().unwrap(),
-            template.bytes().tuple_windows().counts(),
+            template.bytes().tuple_windows().counts().cast_values(),
             rules
                 .lines()
                 .map(|line| line.split(" -> ").next_tuple().unwrap())

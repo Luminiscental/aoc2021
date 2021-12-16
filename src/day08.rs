@@ -28,10 +28,10 @@ impl<'a> Day<'a> for Day08 {
     }
 
     fn solve_part2(displays: Self::ProcessedInput) -> String {
-        let pack = |s: &str| s.chars().map(|c| 1 << (c as usize - 'a' as usize)).sum();
+        let pack = |s: &str| s.chars().map(|c| 1 << (c as u32 - 'a' as u32)).sum();
         let find_nsegments = |slice: &[&str], n| pack(slice.iter().find(|s| s.len() == n).unwrap());
-        let decode = |s, one: usize, four: usize| {
-            let d: usize = pack(s);
+        let decode = |s, one: u32, four: u32| {
+            let d: u32 = pack(s);
             match (s.len(), (d & one).count_ones(), (d & four).count_ones()) {
                 (2, _, _) => 1,
                 (3, _, _) => 7,
@@ -53,7 +53,7 @@ impl<'a> Day<'a> for Day08 {
                 let four = find_nsegments(&display[..10], 4);
                 util::unradix(display[10..].iter().map(|s| decode(s, one, four)).rev(), 10)
             })
-            .sum::<usize>()
+            .sum::<u64>()
             .to_string()
     }
 }

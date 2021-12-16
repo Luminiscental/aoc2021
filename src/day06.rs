@@ -2,7 +2,7 @@ use crate::day::Day;
 
 pub struct Day06;
 
-fn simulate(populations: &mut [usize; 9], time: usize) {
+fn simulate(populations: &mut [u64; 9], time: u32) {
     for _ in 0..time {
         populations.rotate_left(1);
         populations[6] += populations[8];
@@ -10,7 +10,7 @@ fn simulate(populations: &mut [usize; 9], time: usize) {
 }
 
 impl<'a> Day<'a> for Day06 {
-    type Input = [usize; 9];
+    type Input = [u64; 9];
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 6;
@@ -25,12 +25,12 @@ impl<'a> Day<'a> for Day06 {
 
     fn solve_part1(mut populations: Self::Input) -> (Self::ProcessedInput, String) {
         simulate(&mut populations, 80);
-        (populations, populations.iter().sum::<usize>().to_string())
+        (populations, populations.iter().sum::<u64>().to_string())
     }
 
     fn solve_part2(mut populations: Self::ProcessedInput) -> String {
         simulate(&mut populations, 256 - 80);
-        populations.iter().sum::<usize>().to_string()
+        populations.iter().sum::<u64>().to_string()
     }
 }
 

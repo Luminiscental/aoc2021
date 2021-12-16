@@ -5,7 +5,7 @@ use crate::{
 use itertools::iproduct;
 
 const SIZE: usize = 5;
-const WINS: [usize; 10] = [
+const WINS: [u32; 10] = [
     0b1111100000000000000000000,
     0b11111000000000000000,
     0b111110000000000,
@@ -20,8 +20,8 @@ const WINS: [usize; 10] = [
 
 #[derive(Debug)]
 pub struct Board {
-    rows: [[usize; SIZE]; SIZE],
-    marks: usize,
+    rows: [[u32; SIZE]; SIZE],
+    marks: u32,
 }
 
 impl Board {
@@ -39,16 +39,16 @@ impl Board {
         }
     }
 
-    fn call(&mut self, number: usize) -> Option<usize> {
+    fn call(&mut self, number: u32) -> Option<u32> {
         self.marks |= iproduct!(0..SIZE, 0..SIZE)
             .filter(|&(r, c)| self.rows[r][c] == number)
             .map(|(r, c)| 1 << (r * SIZE + c))
-            .sum::<usize>();
+            .sum::<u32>();
         WINS.iter().any(|&win| (self.marks & win) == win).then(|| {
             iproduct!(0..SIZE, 0..SIZE)
                 .filter(|(r, c)| self.marks & (1 << (r * SIZE + c)) == 0)
                 .map(|(r, c)| self.rows[r][c])
-                .sum::<usize>()
+                .sum::<u32>()
                 * number
         })
     }
@@ -57,8 +57,8 @@ impl Board {
 pub struct Day04;
 
 impl<'a> Day<'a> for Day04 {
-    type Input = (impl 'a + Iterator<Item = usize>, Vec<Board>);
-    type ProcessedInput = impl Iterator<Item = usize>;
+    type Input = (impl 'a + Iterator<Item = u32>, Vec<Board>);
+    type ProcessedInput = impl Iterator<Item = u32>;
 
     const DAY: usize = 4;
 
