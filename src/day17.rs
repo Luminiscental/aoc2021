@@ -66,4 +66,18 @@ impl<'a> Day<'a> for Day17 {
     }
 }
 
+#[cfg(test)]
+mod test_day17 {
+    use super::*;
+
+    #[test]
+    fn test_day17_examples() {
+        let input = Day17::parse("target area: x=20..30, y=-10..-5");
+        let (input, part1) = Day17::solve_part1(input);
+        assert_eq!(part1, "45");
+        let part2 = Day17::solve_part2(input);
+        assert_eq!(part2, "112");
+    }
+}
+
 bench_day!(17);
