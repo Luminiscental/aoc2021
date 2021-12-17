@@ -102,10 +102,10 @@ bench_day!(17);
  *   under (g_n, f_n).
  *
  *   Now there are two possible ways for (g_n(v_x), f_n(v_y)) to equal a given
- *   point (x, y). If n < v_x, then g_n(v_x) = f_n(v_x), so (x, y) is a preimage
- *   under the simpler function (f_n, f_n), which is easily dealt with since f_n
- *   is an invertible linear function (so we can just apply it to the endpoints
- *   of the target ranges in x and y):
+ *   point (x, y). If n < v_x, then g_n(v_x) = f_n(v_x), so (x, y) is the same
+ *   image under the simpler function (f_n, f_n), which is easily dealt with
+ *   since f_n is an invertible linear function (so we can just apply it to the
+ *   endpoints of the target ranges in x and y):
  *
  *       f_n(v) = v + (v-1) + (v-2) + ... + (v-n+1)
  *              = n*v - (1 + 2 + ... + (n-1))
