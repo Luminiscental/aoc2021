@@ -49,8 +49,8 @@ impl<'a> Day<'a> for Day17 {
 
     fn solve_part1((xrange, yrange): Self::Input) -> (Self::ProcessedInput, String) {
         assert!(*xrange.start() > 0 && *yrange.end() < 0);
-        let mut max_vel = 0;
-        observe_preimages(&xrange, &yrange, |_, ry| max_vel = max_vel.max(*ry.end()));
+        // assumes xrange contains a triangular number
+        let max_vel = -yrange.start() - 1;
         let ans = max_vel * (max_vel + 1) / 2;
         ((xrange, yrange), ans.to_string())
     }
