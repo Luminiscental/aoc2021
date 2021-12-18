@@ -1,114 +1,55 @@
 use crate::day::Day;
 use itertools::Itertools;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Literal {
-    value: u8,
-    lefts: u8,
-    rights: u8,
-}
-
-impl Literal {
-    fn inc_left(mut self) -> Self {
-        self.lefts += 1;
-        self
-    }
-
-    fn inc_right(mut self) -> Self {
-        self.rights += 1;
-        self
-    }
-
-    fn split_left(mut self) -> Self {
-        self.value /= 2;
-        self.inc_left()
-    }
-
-    fn split_right(mut self) -> Self {
-        self.value = (self.value + 1) / 2;
-        self.inc_right()
-    }
-
-    fn split(self) -> (Self, Self) {
-        (self.split_left(), self.split_right())
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Pairs {
-    literals: Vec<Literal>,
-}
+pub struct Pairs(Vec<(u8, u8, u8)>);
 
 impl Pairs {
     fn parse(string: &str) -> Self {
         let (mut string, mut literals) = (string.as_bytes(), Vec::new());
-        let (mut lefts, mut rights) = (0, 0);
+        let mut lr = 0x00;
         while !string.is_empty() {
             match string[0] {
-                b'[' => lefts += 1,
-                b']' => rights -= 1,
-                b',' => {
-                    lefts -= 1;
-                    rights += 1;
-                }
-                c => literals.push(Literal {
-                    value: c - b'0',
-                    lefts,
-                    rights,
-                }),
+                b'[' => lr += 0x10,
+                b']' => lr -= 0x01,
+                b',' => lr -= 0x10 - 0x01,
+                c => literals.push((c - b'0', lr >> 4, lr & 0x0f)),
             }
             string = &string[1..];
         }
-        Self { literals }
+        Self(literals)
     }
 
     fn add(lhs: Self, rhs: Self) -> Self {
-        let literals = lhs
-            .literals
-            .into_iter()
-            .map(Literal::inc_left)
-            .chain(rhs.literals.into_iter().map(Literal::inc_right))
-            .collect();
-        let mut sum = Self { literals };
-        while sum.explode() || sum.split() {}
+        let ls = lhs.0.into_iter().map(|(v, l, r)| (v, l + 1, r));
+        let rs = rhs.0.into_iter().map(|(v, l, r)| (v, l, r + 1));
+        let mut sum = Self(ls.chain(rs).collect());
+        while sum.explode().is_some() || sum.split().is_some() {}
         sum
     }
 
-    fn explode(&mut self) -> bool {
-        self.literals
-            .iter()
-            .position(|literal| literal.lefts + literal.rights >= 5)
-            .map_or(false, |i| {
-                let (lhs, rhs) = (self.literals[i], self.literals.remove(i + 1));
-                (i != 0).then(|| self.literals[i - 1].value += lhs.value);
-                (i != self.literals.len() - 1).then(|| self.literals[i + 1].value += rhs.value);
-                self.literals[i].value = 0;
-                self.literals[i].lefts -= 1;
-                true
-            })
+    fn explode(&mut self) -> Option<()> {
+        let i = self.0.iter().position(|(_, l, r)| l + r >= 5)?;
+        let (lhs, rhs) = (self.0[i], self.0.remove(i + 1));
+        (i != 0).then(|| self.0[i - 1].0 += lhs.0);
+        (i != self.0.len() - 1).then(|| self.0[i + 1].0 += rhs.0);
+        self.0[i] = (0, lhs.1 - 1, lhs.2);
+        Some(())
     }
 
-    fn split(&mut self) -> bool {
-        self.literals
-            .iter()
-            .position(|literal| literal.value >= 10)
-            .map_or(false, |i| {
-                let (lhs, rhs) = self.literals[i].split();
-                self.literals[i] = lhs;
-                self.literals.insert(i + 1, rhs);
-                true
-            })
+    fn split(&mut self) -> Option<()> {
+        let i = self.0.iter().position(|lit| lit.0 >= 10)?;
+        let sp = self.0[i];
+        self.0[i] = (sp.0 / 2, sp.1 + 1, sp.2);
+        self.0.insert(i + 1, ((sp.0 + 1) / 2, sp.1, sp.2 + 1));
+        Some(())
     }
 
     fn magnitude(&self) -> u32 {
-        let pow3 = [1, 3, 9, 27, 81];
-        let pow2 = [1, 2, 4, 8, 16];
-        self.literals
-            .iter()
-            .map(|literal| {
-                literal.value as u32 * pow3[literal.lefts as usize] * pow2[literal.rights as usize]
-            })
-            .sum()
+        let pow3 = |i| [1, 3, 9, 27, 81][i as usize];
+        let pow2 = |i| [1, 2, 4, 8, 16][i as usize];
+        let magn = |lit: &(_, _, _)| lit.0 as u32 * pow3(lit.1) * pow2(lit.2);
+        self.0.iter().map(magn).sum()
     }
 }
 
@@ -130,17 +71,10 @@ impl<'a> Day<'a> for Day18 {
     }
 
     fn solve_part2(numbers: Self::ProcessedInput) -> String {
-        numbers
-            .into_iter()
-            .tuple_combinations()
-            .map(|(lhs, rhs)| {
-                Pairs::add(lhs.clone(), rhs.clone())
-                    .magnitude()
-                    .max(Pairs::add(rhs, lhs).magnitude())
-            })
-            .max()
-            .unwrap()
-            .to_string()
+        let m = |l, r| Pairs::add(l, r).magnitude();
+        let ord = numbers.into_iter().tuple_combinations();
+        let ms = ord.map(|(lhs, rhs)| m(lhs.clone(), rhs.clone()).max(m(rhs, lhs)));
+        ms.max().unwrap().to_string()
     }
 }
 
