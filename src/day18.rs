@@ -1,5 +1,5 @@
 use crate::day::Day;
-use itertools::iproduct;
+use itertools::Itertools;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Literal {
@@ -130,8 +130,14 @@ impl<'a> Day<'a> for Day18 {
     }
 
     fn solve_part2(numbers: Self::ProcessedInput) -> String {
-        iproduct!(numbers.clone().into_iter(), numbers.into_iter())
-            .map(|(lhs, rhs)| Pairs::add(lhs, rhs).magnitude())
+        numbers
+            .into_iter()
+            .tuple_combinations()
+            .map(|(lhs, rhs)| {
+                Pairs::add(lhs.clone(), rhs.clone())
+                    .magnitude()
+                    .max(Pairs::add(rhs, lhs).magnitude())
+            })
             .max()
             .unwrap()
             .to_string()
