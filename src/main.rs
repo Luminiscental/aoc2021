@@ -14,6 +14,7 @@ use std::env;
 macro_rules! bench_day {
     ($day:literal) => {
         paste::paste! {
+            #[cfg(not(debug_assertions))]
             #[cfg(test)]
             mod [<bench_day $day>] {
                 use crate::day::Day;

@@ -1,80 +1,49 @@
 use crate::day::Day;
+use hashbrown::HashSet;
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
 
-type Point = (i32, i32, i32);
+type Point = (i16, i16, i16);
 
-struct Orientation {
-    roll: u8,
-    face: u8,
-}
-
-impl Orientation {
-    fn iter_all() -> impl Iterator<Item = Self> {
-        (0..4).flat_map(|roll| (0..6).map(move |face| Self { roll, face }))
-    }
-
-    fn apply(&self, point: Point) -> Point {
-        let cos = [1, 0, -1, 0][self.roll as usize];
-        let sin = [0, 1, 0, -1][self.roll as usize];
-        let rolled = (
-            point.0,
-            cos * point.1 + sin * point.2,
-            -sin * point.1 + cos * point.2,
-        );
-        match self.face {
-            0 => rolled,
-            1 => (-rolled.1, rolled.0, rolled.2),
-            2 => (-rolled.2, rolled.1, rolled.0),
-            3 => (-rolled.0, -rolled.1, rolled.2),
-            4 => (rolled.1, -rolled.0, rolled.2),
-            5 => (rolled.2, rolled.1, -rolled.0),
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Translation(i32, i32, i32);
-
-impl Translation {
-    fn onto(target: Point, origin: Point) -> Self {
-        Self(
-            target.0 - origin.0,
-            target.1 - origin.1,
-            target.2 - origin.2,
-        )
-    }
-
-    fn manhattan_between(lhs: Self, rhs: Self) -> u32 {
-        lhs.0.abs_diff(rhs.0) + lhs.1.abs_diff(rhs.1) + lhs.2.abs_diff(rhs.2)
-    }
-
-    fn apply(&self, point: Point) -> Point {
-        (point.0 + self.0, point.1 + self.1, point.2 + self.2)
+fn rotate((x, y, z): Point, idx: u8) -> Point {
+    match idx {
+        0 => (x, y, z),
+        1 => (x, z, -y),
+        2 => (x, -y, -z),
+        3 => (x, -z, y),
+        4 => (y, x, -z),
+        5 => (y, z, x),
+        6 => (y, -x, z),
+        7 => (y, -z, -x),
+        8 => (z, x, y),
+        9 => (z, y, -x),
+        10 => (z, -x, -y),
+        11 => (z, -y, x),
+        12 => (-x, y, -z),
+        13 => (-x, z, y),
+        14 => (-x, -y, z),
+        15 => (-x, -z, -y),
+        16 => (-y, x, z),
+        17 => (-y, z, -x),
+        18 => (-y, -x, -z),
+        19 => (-y, -z, x),
+        20 => (-z, x, -y),
+        21 => (-z, y, x),
+        22 => (-z, -x, y),
+        23 => (-z, -y, -x),
+        _ => unreachable!(),
     }
 }
 
-fn align(onto: &[Point], from: &[Point]) -> Option<(Vec<Point>, Translation)> {
-    for orientation in Orientation::iter_all() {
-        let mut bad = HashMap::<Point, Vec<Point>>::new();
-        for &point in from[11..].iter() {
-            for &ref_point in onto[11..].iter() {
-                if bad.get(&point).map_or(false, |v| v.contains(&ref_point)) {
-                    continue;
-                }
-                let translation = Translation::onto(ref_point, orientation.apply(point));
-                let transform = |p| translation.apply(orientation.apply(p));
-                let alignment = from
-                    .iter()
-                    .map(|&p| (p, transform(p)))
-                    .filter(|(_p, tp)| onto.contains(tp))
-                    .collect::<Vec<_>>();
-                if alignment.len() >= 12 {
-                    return Some((from.iter().map(|&p| transform(p)).collect(), translation));
-                }
-                for (p, tp) in alignment.into_iter() {
-                    bad.entry(p).or_insert_with(Vec::new).push(tp);
+fn try_align(onto: &mut HashSet<Point>, from: &[Point]) -> Option<(i16, i16, i16)> {
+    for rot in 0..24 {
+        let ori = from.iter().map(|&p| rotate(p, rot)).collect::<Vec<_>>();
+        for &orig in ori.iter().skip(11) {
+            for &dest in onto.iter().skip(11) {
+                let del = (dest.0 - orig.0, dest.1 - orig.1, dest.2 - orig.2);
+                let abs = ori.iter().map(|&p| (p.0 + del.0, p.1 + del.1, p.2 + del.2));
+                if abs.clone().filter(|p| onto.contains(p)).count() >= 12 {
+                    onto.extend(abs);
+                    return Some(del);
                 }
             }
         }
@@ -86,7 +55,7 @@ pub struct Day19;
 
 impl<'a> Day<'a> for Day19 {
     type Input = Vec<Vec<Point>>;
-    type ProcessedInput = Vec<Translation>;
+    type ProcessedInput = Vec<(i16, i16, i16)>;
 
     const DAY: usize = 19;
 
@@ -101,30 +70,26 @@ impl<'a> Day<'a> for Day19 {
         input.split("\n\n").map(parse_scan).collect()
     }
 
-    fn solve_part1(scanners: Self::Input) -> (Self::ProcessedInput, String) {
-        let mut found = HashMap::with_capacity(scanners.len());
-        let mut translations = vec![Translation(0, 0, 0)];
-        found.insert(0, scanners[0].clone());
-        while found.len() < scanners.len() {
-            for i in (0..scanners.len()).filter(|i| !found.contains_key(i)) {
-                if let Some((beacons, translation)) =
-                    found.values().find_map(|bs| align(bs, &scanners[i]))
-                {
-                    found.insert(i, beacons);
+    fn solve_part1(mut scans: Self::Input) -> (Self::ProcessedInput, String) {
+        let mut beacons = scans.remove(0).into_iter().collect();
+        let mut translations = Vec::with_capacity(scans.len());
+        translations.push((0, 0, 0));
+        while !scans.is_empty() {
+            for i in (0..scans.len()).rev() {
+                if let Some(translation) = try_align(&mut beacons, &scans[i]) {
                     translations.push(translation);
-                    break;
+                    scans.swap_remove(i);
                 }
             }
         }
-        let beacons = found.into_values().flatten().collect::<HashSet<_>>();
         (translations, beacons.len().to_string())
     }
 
-    fn solve_part2(positions: Self::ProcessedInput) -> String {
-        positions
+    fn solve_part2(translations: Self::ProcessedInput) -> String {
+        translations
             .into_iter()
             .tuple_combinations()
-            .map(|(a, b)| Translation::manhattan_between(a, b))
+            .map(|(l, r)| l.0.abs_diff(r.0) + l.1.abs_diff(r.1) + l.2.abs_diff(r.2))
             .max()
             .unwrap()
             .to_string()
