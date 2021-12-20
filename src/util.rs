@@ -1,27 +1,11 @@
+use hashbrown::HashSet;
 use std::{
     cmp::Ordering,
-    collections::{HashMap, HashSet, VecDeque},
-    convert::TryInto,
-    fmt::Debug,
+    collections::VecDeque,
     hash::Hash,
     iter::{self, Sum},
     ops::AddAssign,
 };
-
-pub trait CastValues<K, V> {
-    fn cast_values(self) -> HashMap<K, V>;
-}
-
-impl<K: Eq + Hash, V, W: TryInto<V>> CastValues<K, V> for HashMap<K, W>
-where
-    <W as TryInto<V>>::Error: Debug,
-{
-    fn cast_values(self) -> HashMap<K, V> {
-        self.into_iter()
-            .map(|(key, value)| (key, value.try_into().unwrap()))
-            .collect()
-    }
-}
 
 pub struct BitSet(Vec<u64>);
 

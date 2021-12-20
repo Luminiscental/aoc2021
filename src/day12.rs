@@ -1,6 +1,6 @@
 use crate::day::Day;
 use itertools::Itertools;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 type Cave = [u8; 2];
 

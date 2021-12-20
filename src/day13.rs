@@ -1,9 +1,10 @@
 use crate::{day::Day, util::CollectArray};
 use itertools::Itertools;
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::VecDeque,
     mem,
 };
+use hashbrown::HashSet;
 
 fn fold(grid: &mut HashSet<[u16; 2]>, fold: (u8, u16)) {
     *grid = mem::take(grid)

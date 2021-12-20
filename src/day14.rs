@@ -1,6 +1,7 @@
-use crate::{day::Day, util::CastValues};
+use crate::day::Day;
+use hashbrown::HashMap;
 use itertools::Itertools;
-use std::{collections::HashMap, iter, mem};
+use std::{iter, mem};
 
 type Pair = (u8, u8);
 
@@ -16,7 +17,7 @@ fn diversity(last: u8, polymer: &HashMap<Pair, u64>) -> u64 {
     for (pair, count) in polymer.iter().chain(iter::once((&(last, 0), &1))) {
         *counts.entry(pair.0).or_insert(0) += count;
     }
-    let (min, max) = counts.into_values().minmax().into_option().unwrap();
+    let (min, max) = counts.values().minmax().into_option().unwrap();
     max - min
 }
 
@@ -32,7 +33,13 @@ impl<'a> Day<'a> for Day14 {
         let (template, rules) = input.split("\n\n").next_tuple().unwrap();
         (
             template.bytes().last().unwrap(),
-            template.bytes().tuple_windows().counts().cast_values(),
+            template
+                .bytes()
+                .tuple_windows()
+                .counts()
+                .into_iter()
+                .map(|kv| (kv.0, kv.1 as u64))
+                .collect(),
             rules
                 .lines()
                 .map(|line| line.split(" -> ").next_tuple().unwrap())
