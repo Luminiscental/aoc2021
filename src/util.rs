@@ -43,14 +43,6 @@ impl BitSet {
         self.0.iter().map(|block| block.count_ones() as usize).sum()
     }
 
-    pub fn clear(&mut self) {
-        self.0.clear();
-    }
-
-    pub fn reserve(&mut self, capacity: usize) {
-        self.0.extend(iter::repeat(0).take((capacity + 63) / 64));
-    }
-
     pub fn insert(&mut self, value: u32) {
         let (chunk, index) = Self::unpack(value);
         if chunk >= self.0.len() {
@@ -58,20 +50,6 @@ impl BitSet {
                 .extend(iter::repeat(0).take(1 + chunk - self.0.len()));
         }
         self.0[chunk] |= 1 << index;
-    }
-
-    #[allow(dead_code)]
-    pub fn contains(&self, value: u32) -> bool {
-        let (chunk, index) = Self::unpack(value);
-        self.0
-            .get(chunk)
-            .map_or(false, |chunk| chunk & (1 << index) != 0)
-    }
-
-    #[inline(always)]
-    pub unsafe fn contains_unchecked(&self, value: u32) -> bool {
-        let (chunk, index) = Self::unpack(value);
-        (self.0.get_unchecked(chunk) & (1 << index)) != 0
     }
 }
 
