@@ -1,8 +1,7 @@
-use crate::{day::Day, util::BitSet};
-use hashbrown::HashSet;
+use crate::day::Day;
 use itertools::Itertools;
 
-const KERNEL: [((i32, i32), u16); 9] = [
+const KERNEL: [((i32, i32), i32); 9] = [
     ((1, 1), 1 << 0),
     ((0, 1), 1 << 1),
     ((-1, 1), 1 << 2),
@@ -14,75 +13,65 @@ const KERNEL: [((i32, i32), u16); 9] = [
     ((-1, -1), 1 << 8),
 ];
 
+macro_rules! subkernel {
+    ($($indices:literal),+) => {
+        (&[$(KERNEL[$indices]),+], 511 - ($((1 << $indices) | )+ 0))
+    }
+}
+
 pub struct Image {
-    foreground: HashSet<(i32, i32)>,
+    foreground: Vec<bool>,
     background: bool,
-    xmin: i32,
-    xmax: i32,
-    ymin: i32,
-    ymax: i32,
+    size: i32,
 }
 
 impl Image {
-    fn new(foreground: HashSet<(i32, i32)>, background: bool) -> Self {
-        let (xmin, xmax) = foreground
-            .iter()
-            .map(|p| p.0)
-            .minmax()
-            .into_option()
-            .unwrap();
-        let (ymin, ymax) = foreground
-            .iter()
-            .map(|p| p.1)
-            .minmax()
-            .into_option()
-            .unwrap();
-        Self {
-            foreground,
-            background,
-            xmin,
-            xmax,
-            ymin,
-            ymax,
-        }
-    }
-
-    fn enhance(&mut self, table: &[bool], buffer: &mut BitSet) {
-        let (xmin, xmax) = (self.xmin - 2, self.xmax + 2);
-        let (ymin, ymax) = (self.ymin - 2, self.ymax + 2);
-        let width = xmax - xmin;
-        let height = ymax - ymin;
-        buffer.clear();
-        buffer.reserve(((width + 1) * (height + 1)) as usize);
-        for j in 0..=height {
-            for i in 0..=width {
-                if self.background != self.foreground.contains(&(xmin + i, ymin + j)) {
-                    buffer.insert((i + j * width) as u32);
-                }
+    fn enhance(&mut self, algorithm: &[bool]) {
+        let new_size = self.size + 2;
+        let new_background = algorithm[self.background as usize * 511];
+        let mut new_foreground = vec![false; (new_size * new_size) as usize];
+        let mut convolve = |x, y, (ker, offset): (&[_], _)| {
+            let mut lookup = offset * self.background as i32;
+            let idx = x - 1 + (y - 1) * self.size;
+            for &((dx, dy), b) in ker.iter() {
+                let fg = self.foreground[(idx + dx + dy * self.size) as usize];
+                lookup |= b * (fg != self.background) as i32;
             }
-        }
-        let mut new_foreground = HashSet::with_capacity(self.foreground.len());
-        let new_background = table[self.background as usize * 511];
-        for j in 1..=height - 1 {
-            for i in 1..=width - 1 {
-                let mut lookup = 0;
-                for ((dx, dy), bit) in KERNEL.iter() {
-                    lookup |= bit
-                        * unsafe { buffer.contains_unchecked((i + dx + (j + dy) * width) as u32) }
-                            as u16;
-                }
-                if table[lookup as usize] != new_background {
-                    let (x, y) = (xmin + i, ymin + j);
-                    new_foreground.insert((x, y));
-                    self.xmin = self.xmin.min(x);
-                    self.xmax = self.xmax.max(x);
-                    self.ymin = self.ymin.min(y);
-                    self.ymax = self.ymax.max(y);
-                }
+            new_foreground[(x + y * new_size) as usize] =
+                new_background != algorithm[lookup as usize];
+        };
+        convolve(0, 0, subkernel!(0));
+        convolve(0, 1, subkernel!(0, 3));
+        convolve(1, 0, subkernel!(0, 1));
+        convolve(0, new_size - 1, subkernel!(6));
+        convolve(0, new_size - 2, subkernel!(6, 3));
+        convolve(1, new_size - 1, subkernel!(6, 7));
+        convolve(new_size - 1, 0, subkernel!(2));
+        convolve(new_size - 1, 1, subkernel!(2, 5));
+        convolve(new_size - 2, 0, subkernel!(2, 1));
+        convolve(new_size - 1, new_size - 1, subkernel!(8));
+        convolve(new_size - 1, new_size - 2, subkernel!(8, 5));
+        convolve(new_size - 2, new_size - 1, subkernel!(8, 7));
+        convolve(1, 1, subkernel!(0, 1, 3, 4));
+        convolve(1, new_size - 2, subkernel!(3, 4, 6, 7));
+        convolve(new_size - 2, 1, subkernel!(1, 2, 4, 5));
+        convolve(new_size - 2, new_size - 2, subkernel!(4, 5, 7, 8));
+        for y in 2..new_size - 2 {
+            convolve(y, 0, subkernel!(0, 1, 2));
+            convolve(y, new_size - 1, subkernel!(6, 7, 8));
+            convolve(0, y, subkernel!(0, 3, 6));
+            convolve(new_size - 1, y, subkernel!(2, 5, 8));
+            convolve(y, 1, subkernel!(0, 1, 2, 3, 4, 5));
+            convolve(y, new_size - 2, subkernel!(3, 4, 5, 6, 7, 8));
+            convolve(1, y, subkernel!(0, 1, 3, 4, 6, 7));
+            convolve(new_size - 2, y, subkernel!(1, 2, 4, 5, 7, 8));
+            for x in 2..new_size - 2 {
+                convolve(x, y, subkernel!(0, 1, 2, 3, 4, 5, 6, 7, 8));
             }
         }
         self.foreground = new_foreground;
         self.background = new_background;
+        self.size = new_size;
     }
 }
 
@@ -95,38 +84,46 @@ impl<'a> Day<'a> for Day20 {
     const DAY: usize = 20;
 
     fn parse(input: &'a str) -> Self::Input {
-        let (table, image) = input.split("\n\n").next_tuple().unwrap();
-        let table = table
+        let (algorithm, image) = input.split("\n\n").next_tuple().unwrap();
+        let algorithm = algorithm
             .trim()
             .chars()
             .filter(|&c| c != '\n')
             .map(|c| c == '#')
             .collect();
+        let mut size = 0;
         let image = image
             .trim()
             .lines()
-            .enumerate()
-            .flat_map(|(y, line)| {
-                line.chars()
-                    .enumerate()
-                    .map(move |(x, c)| (c == '#').then(|| (x as i32, y as i32)))
-                    .flatten()
+            .flat_map(|line| {
+                size = line.len() as i32;
+                line.chars().map(|c| c == '#')
             })
             .collect();
-        (table, Image::new(image, false))
+        (
+            algorithm,
+            Image {
+                foreground: image,
+                background: false,
+                size,
+            },
+        )
     }
 
-    fn solve_part1((table, mut image): Self::Input) -> (Self::ProcessedInput, String) {
-        let mut buffer = BitSet::new();
-        (0..2).for_each(|_| image.enhance(&table, &mut buffer));
-        let ans = image.foreground.len();
-        ((table, image), ans.to_string())
+    fn solve_part1((algorithm, mut image): Self::Input) -> (Self::ProcessedInput, String) {
+        (0..2).for_each(|_| image.enhance(&algorithm));
+        let ans = image.foreground.iter().filter(|&&b| b).count();
+        ((algorithm, image), ans.to_string())
     }
 
-    fn solve_part2((table, mut image): Self::ProcessedInput) -> String {
-        let mut buffer = BitSet::new();
-        (0..48).for_each(|_| image.enhance(&table, &mut buffer));
-        image.foreground.len().to_string()
+    fn solve_part2((algorithm, mut image): Self::ProcessedInput) -> String {
+        (0..48).for_each(|_| image.enhance(&algorithm));
+        image
+            .foreground
+            .into_iter()
+            .filter(|&b| b)
+            .count()
+            .to_string()
     }
 }
 
