@@ -10,7 +10,7 @@ type ScanShape = Vec<HashMap<Conn, u8>>;
 fn record_connections(scans: &[Scan]) -> Vec<ScanShape> {
     let mut all_connections = Vec::with_capacity(scans.len());
     for scan in scans.iter() {
-        let npairs = scan.len() * (scan.len() + 1) / 2;
+        let npairs = scan.len() * (scan.len() - 1) / 2;
         let mut scan_connections = vec![HashMap::with_capacity(npairs); scan.len()];
         for ((i, [ix, iy, iz]), (j, &[jx, jy, jz])) in scan.iter().enumerate().tuple_combinations()
         {
