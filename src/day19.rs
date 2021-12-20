@@ -1,42 +1,95 @@
-use crate::day::Day;
-use hashbrown::{HashMap, HashSet};
+use crate::{day::Day, util::SortedVec};
+use hashbrown::HashSet;
 use itertools::Itertools;
+use std::cmp::Ordering;
 
-const THRESHOLD: usize = 12;
+const THRESHOLD: usize = 6; // this is heuristic
 
 type Point = [i16; 3];
-type Conn = [u16; 3];
-type Scan = Vec<Point>;
-type ScanShape = Vec<HashMap<Conn, u8>>;
+type CanonicalPoint = [i16; 3];
+type ScanCanonicalization = SortedVec<(CanonicalPoint, (u8, u8))>;
 
-fn record_connections(scans: &[Scan]) -> Vec<ScanShape> {
-    let mut all_connections = Vec::with_capacity(scans.len());
-    for scan in scans.iter() {
-        let npairs = scan.len() * (scan.len() - 1) / 2;
-        let mut scan_connections = vec![HashMap::with_capacity(npairs); scan.len()];
-        for ((i, [ix, iy, iz]), (j, &[jx, jy, jz])) in scan.iter().enumerate().tuple_combinations()
-        {
-            let mut connection = [ix.abs_diff(jx), iy.abs_diff(jy), iz.abs_diff(jz)];
-            connection.sort_unstable();
-            scan_connections[i].insert(connection, j as u8);
-            scan_connections[j].insert(connection, i as u8);
-        }
-        all_connections.push(scan_connections);
+fn sort3_by_abs(ns: &mut [i16; 3]) -> i16 {
+    let mut ms = ns.map(i16::abs);
+    let mut sign = 1;
+    if ms[0] > ms[1] {
+        ns.swap(0, 1);
+        ms.swap(0, 1);
+        sign *= -1;
     }
-    all_connections
+    if ms[0] > ms[2] {
+        ns.swap(0, 2);
+        ms.swap(0, 2);
+        sign *= -1;
+    }
+    if ms[1] > ms[2] {
+        ns.swap(1, 2);
+        ms.swap(1, 2);
+        sign *= -1;
+    }
+    sign
 }
 
-fn try_align(to_shape: &ScanShape, from_shape: &ScanShape) -> Option<(usize, usize, Conn)> {
-    for (f_bcn, f_conns) in from_shape.iter().enumerate() {
-        for (t_bcn, t_conns) in to_shape.iter().enumerate().skip(THRESHOLD - 1) {
-            let match_conns = f_conns.keys().copied().filter(|f| t_conns.contains_key(f));
-            if match_conns.clone().count() >= THRESHOLD - 1 {
-                let skew = |p: &Conn| 0 != p[0] && p[0] != p[1] && p[1] != p[2];
-                return Some((t_bcn, f_bcn, match_conns.clone().find(skew).unwrap()));
+fn canonicalize(mut p: Point) -> CanonicalPoint {
+    let sign = sort3_by_abs(&mut p) * p[0].signum() * p[1].signum();
+    [p[0].abs(), p[1].abs(), sign * p[2]]
+}
+
+fn is_skew(p: CanonicalPoint) -> bool {
+    0 != p[0] && p[0] != p[1] && p[1] != p[2].abs()
+}
+
+fn shape_of(scan: &[Point]) -> ScanCanonicalization {
+    let mut shape = SortedVec::with_capacity(scan.len() * (scan.len() - 1));
+    for ((i, [ix, iy, iz]), (j, [jx, jy, jz])) in scan.iter().enumerate().tuple_combinations() {
+        let connection = canonicalize([ix - jx, iy - jy, iz - jz]);
+        let flipped_connection = [connection[0], connection[1], -connection[2]];
+        shape.push((connection, (i as u8, j as u8)));
+        shape.push((flipped_connection, (j as u8, i as u8)));
+    }
+    shape
+}
+
+fn filter_map_matches<R, F: FnMut(CanonicalPoint, (u8, u8), (u8, u8)) -> Option<R>>(
+    lhs: &ScanCanonicalization,
+    rhs: &ScanCanonicalization,
+    mut f: F,
+) -> Option<R> {
+    let (mut lhs_conns, mut rhs_conns) = (lhs.iter().peekable(), rhs.iter().peekable());
+    while let (Some(&&(lhs_conn, lhs_idxs)), Some(&&(rhs_conn, rhs_idxs))) =
+        (lhs_conns.peek(), rhs_conns.peek())
+    {
+        match lhs_conn.cmp(&rhs_conn) {
+            Ordering::Less => lhs_conns.next(),
+            Ordering::Greater => rhs_conns.next(),
+            Ordering::Equal => {
+                if let Some(result) = f(lhs_conn, lhs_idxs, rhs_idxs) {
+                    return Some(result);
+                }
+                lhs_conns.next();
+                rhs_conns.next()
             }
-        }
+        };
     }
     None
+}
+
+fn shapes_match(lhs: &ScanCanonicalization, rhs: &ScanCanonicalization) -> bool {
+    let mut matches = 0;
+    filter_map_matches(lhs, rhs, |_, _, _| {
+        matches += 1;
+        (matches == THRESHOLD).then(|| ())
+    })
+    .is_some()
+}
+
+fn find_skew(
+    lhs: &ScanCanonicalization,
+    rhs: &ScanCanonicalization,
+) -> Option<((u8, u8), (u8, u8))> {
+    filter_map_matches(lhs, rhs, |conn, onto_idxs, from_idxs| {
+        is_skew(conn).then(|| (onto_idxs, from_idxs))
+    })
 }
 
 fn orient(tv: Point, tp: Point, fv: Point, fp: Point, from: &[Point]) -> (Point, Vec<Point>) {
@@ -86,7 +139,7 @@ impl<'a> Day<'a> for Day19 {
     }
 
     fn solve_part1(scans: Self::Input) -> (Self::ProcessedInput, String) {
-        let conns = record_connections(&scans);
+        let shapes = scans.iter().map(|s| shape_of(s)).collect::<Vec<_>>();
         let mut oriented = vec![Vec::with_capacity(scans[0].len()); scans.len()];
         let mut offsets = Vec::with_capacity(scans.len());
         oriented[0] = scans[0].clone();
@@ -102,29 +155,32 @@ impl<'a> Day<'a> for Day19 {
                     }
                     let scan_i = &oriented[i];
                     let scan_j = &scans[j];
-                    if let Some((bcn_i, bcn_j, match_conn)) = try_align(&conns[i], &conns[j]) {
-                        let conn_bcn_i = scan_i[conns[i][bcn_i][&match_conn] as usize];
-                        let conn_bcn_j = scan_j[conns[j][bcn_j][&match_conn] as usize];
-                        let (bcn_i, bcn_j) = (scan_i[bcn_i], scan_j[bcn_j]);
-                        let conn_i = [
-                            conn_bcn_i[0] - bcn_i[0],
-                            conn_bcn_i[1] - bcn_i[1],
-                            conn_bcn_i[2] - bcn_i[2],
+                    if shapes_match(&shapes[i], &shapes[j]) {
+                        let ((lhs_idx_i, rhs_idx_i), (lhs_idx_j, rhs_idx_j)) =
+                            find_skew(&shapes[i], &shapes[j]).unwrap();
+                        let (lhs_i, rhs_i) =
+                            (scan_i[lhs_idx_i as usize], scan_i[rhs_idx_i as usize]);
+                        let (lhs_j, rhs_j) =
+                            (scan_j[lhs_idx_j as usize], scan_j[rhs_idx_j as usize]);
+                        let vec_i = [
+                            lhs_i[0] - rhs_i[0],
+                            lhs_i[1] - rhs_i[1],
+                            lhs_i[2] - rhs_i[2],
                         ];
-                        let conn_j = [
-                            conn_bcn_j[0] - bcn_j[0],
-                            conn_bcn_j[1] - bcn_j[1],
-                            conn_bcn_j[2] - bcn_j[2],
+                        let vec_j = [
+                            lhs_j[0] - rhs_j[0],
+                            lhs_j[1] - rhs_j[1],
+                            lhs_j[2] - rhs_j[2],
                         ];
-                        let (offset, oriented_j) = orient(conn_i, bcn_i, conn_j, bcn_j, scan_j);
+                        let (offset, oriented_j) = orient(vec_i, lhs_i, vec_j, lhs_j, scan_j);
                         oriented[j] = oriented_j;
                         offsets.push(offset);
                     }
                 }
             }
         }
-        let bcns = oriented.into_iter().flatten().collect::<HashSet<_>>();
-        (offsets, bcns.len().to_string())
+        let ans = oriented.into_iter().flatten().collect::<HashSet<_>>().len();
+        (offsets, ans.to_string())
     }
 
     fn solve_part2(offsets: Self::ProcessedInput) -> String {

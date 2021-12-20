@@ -5,7 +5,28 @@ use std::{
     hash::Hash,
     iter::{self, Sum},
     ops::AddAssign,
+    slice::Iter,
 };
+
+pub struct SortedVec<T>(Vec<T>);
+
+impl<T> SortedVec<T> {
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(Vec::with_capacity(capacity))
+    }
+
+    pub fn iter(&self) -> Iter<T> {
+        self.0.iter()
+    }
+
+    pub fn push(&mut self, element: T)
+    where
+        T: Ord,
+    {
+        let index = self.0.binary_search(&element).unwrap_or_else(|i| i);
+        self.0.insert(index, element);
+    }
+}
 
 pub struct BitSet(Vec<u64>);
 
