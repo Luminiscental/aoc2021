@@ -1,61 +1,74 @@
 use crate::day::Day;
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
-type Point = (i16, i16, i16);
+type Point = [i16; 3];
+type Conn = [u16; 3];
+type Scan = Vec<Point>;
+type ScanShape = Vec<HashMap<Conn, u8>>;
 
-fn rotate((x, y, z): Point, idx: u8) -> Point {
-    match idx {
-        0 => (x, y, z),
-        1 => (x, z, -y),
-        2 => (x, -y, -z),
-        3 => (x, -z, y),
-        4 => (y, x, -z),
-        5 => (y, z, x),
-        6 => (y, -x, z),
-        7 => (y, -z, -x),
-        8 => (z, x, y),
-        9 => (z, y, -x),
-        10 => (z, -x, -y),
-        11 => (z, -y, x),
-        12 => (-x, y, -z),
-        13 => (-x, z, y),
-        14 => (-x, -y, z),
-        15 => (-x, -z, -y),
-        16 => (-y, x, z),
-        17 => (-y, z, -x),
-        18 => (-y, -x, -z),
-        19 => (-y, -z, x),
-        20 => (-z, x, -y),
-        21 => (-z, y, x),
-        22 => (-z, -x, y),
-        23 => (-z, -y, -x),
-        _ => unreachable!(),
+fn record_connections(scans: &[Scan]) -> Vec<ScanShape> {
+    let mut all_connections = Vec::with_capacity(scans.len());
+    for scan in scans.iter() {
+        let npairs = scan.len() * (scan.len() + 1) / 2;
+        let mut scan_connections = vec![HashMap::with_capacity(npairs); scan.len()];
+        for ((i, [ix, iy, iz]), (j, &[jx, jy, jz])) in scan.iter().enumerate().tuple_combinations()
+        {
+            let mut connection = [ix.abs_diff(jx), iy.abs_diff(jy), iz.abs_diff(jz)];
+            connection.sort_unstable();
+            scan_connections[i].insert(connection, j as u8);
+            scan_connections[j].insert(connection, i as u8);
+        }
+        all_connections.push(scan_connections);
     }
+    all_connections
 }
 
-fn try_align(onto: &mut HashSet<Point>, from: &[Point]) -> Option<(i16, i16, i16)> {
-    for rot in 0..24 {
-        let ori = from.iter().map(|&p| rotate(p, rot)).collect::<Vec<_>>();
-        for &orig in ori.iter().skip(11) {
-            for &dest in onto.iter().skip(11) {
-                let del = (dest.0 - orig.0, dest.1 - orig.1, dest.2 - orig.2);
-                let abs = ori.iter().map(|&p| (p.0 + del.0, p.1 + del.1, p.2 + del.2));
-                if abs.clone().filter(|p| onto.contains(p)).count() >= 12 {
-                    onto.extend(abs);
-                    return Some(del);
-                }
+fn try_align(to_shape: &ScanShape, from_shape: &ScanShape) -> Option<(usize, usize, Conn)> {
+    for (f_bcn, f_conns) in from_shape.iter().enumerate().skip(11) {
+        for (t_bcn, t_conns) in to_shape.iter().enumerate().skip(11) {
+            let match_conns = f_conns.keys().copied().filter(|f| t_conns.contains_key(f));
+            if match_conns.clone().count() >= 11 {
+                let skew = |p: &Conn| 0 != p[0] && p[0] != p[1] && p[1] != p[2];
+                return Some((t_bcn, f_bcn, match_conns.clone().find(skew).unwrap()));
             }
         }
     }
     None
 }
 
+fn orient(tv: Point, tp: Point, fv: Point, fp: Point, from: &[Point]) -> (Point, Vec<Point>) {
+    let ind = |n| match n {
+        _ if n == fv[0].abs() => 0,
+        _ if n == fv[1].abs() => 1,
+        _ => 2,
+    };
+    let pm = [ind(tv[0].abs()), ind(tv[1].abs()), ind(tv[2].abs())];
+    let sign = [tv[0] / fv[pm[0]], tv[1] / fv[pm[1]], tv[2] / fv[pm[2]]];
+    let offset = [
+        tp[0] - sign[0] * fp[pm[0]],
+        tp[1] - sign[1] * fp[pm[1]],
+        tp[2] - sign[2] * fp[pm[2]],
+    ];
+    (
+        offset,
+        from.iter()
+            .map(|point| {
+                [
+                    offset[0] + sign[0] * point[pm[0]],
+                    offset[1] + sign[1] * point[pm[1]],
+                    offset[2] + sign[2] * point[pm[2]],
+                ]
+            })
+            .collect(),
+    )
+}
+
 pub struct Day19;
 
 impl<'a> Day<'a> for Day19 {
     type Input = Vec<Vec<Point>>;
-    type ProcessedInput = Vec<(i16, i16, i16)>;
+    type ProcessedInput = Vec<Point>;
 
     const DAY: usize = 19;
 
@@ -63,33 +76,60 @@ impl<'a> Day<'a> for Day19 {
         let parse_point = |point| {
             str::split(point, ',')
                 .next_tuple()
-                .and_then(|(x, y, z)| Some((x.parse().ok()?, y.parse().ok()?, z.parse().ok()?)))
+                .and_then(|(x, y, z)| Some([x.parse().ok()?, y.parse().ok()?, z.parse().ok()?]))
                 .unwrap()
         };
         let parse_scan = |scan| str::lines(scan).skip(1).map(parse_point).collect();
         input.split("\n\n").map(parse_scan).collect()
     }
 
-    fn solve_part1(mut scans: Self::Input) -> (Self::ProcessedInput, String) {
-        let mut beacons = scans.remove(0).into_iter().collect();
-        let mut translations = Vec::with_capacity(scans.len());
-        translations.push((0, 0, 0));
-        while !scans.is_empty() {
-            for i in (0..scans.len()).rev() {
-                if let Some(translation) = try_align(&mut beacons, &scans[i]) {
-                    translations.push(translation);
-                    scans.swap_remove(i);
+    fn solve_part1(scans: Self::Input) -> (Self::ProcessedInput, String) {
+        let conns = record_connections(&scans);
+        let mut oriented = vec![Vec::with_capacity(scans[0].len()); scans.len()];
+        let mut offsets = Vec::with_capacity(scans.len());
+        oriented[0] = scans[0].clone();
+        offsets.push([0, 0, 0]);
+        while oriented.iter().any(Vec::is_empty) {
+            for i in 0..scans.len() {
+                if oriented[i].is_empty() {
+                    continue;
+                }
+                for j in 0..scans.len() {
+                    if !oriented[j].is_empty() {
+                        continue;
+                    }
+                    let scan_i = &oriented[i];
+                    let scan_j = &scans[j];
+                    if let Some((bcn_i, bcn_j, match_conn)) = try_align(&conns[i], &conns[j]) {
+                        let conn_bcn_i = scan_i[conns[i][bcn_i][&match_conn] as usize];
+                        let conn_bcn_j = scan_j[conns[j][bcn_j][&match_conn] as usize];
+                        let (bcn_i, bcn_j) = (scan_i[bcn_i], scan_j[bcn_j]);
+                        let conn_i = [
+                            conn_bcn_i[0] - bcn_i[0],
+                            conn_bcn_i[1] - bcn_i[1],
+                            conn_bcn_i[2] - bcn_i[2],
+                        ];
+                        let conn_j = [
+                            conn_bcn_j[0] - bcn_j[0],
+                            conn_bcn_j[1] - bcn_j[1],
+                            conn_bcn_j[2] - bcn_j[2],
+                        ];
+                        let (offset, oriented_j) = orient(conn_i, bcn_i, conn_j, bcn_j, scan_j);
+                        oriented[j] = oriented_j;
+                        offsets.push(offset);
+                    }
                 }
             }
         }
-        (translations, beacons.len().to_string())
+        let bcns = oriented.into_iter().flatten().collect::<HashSet<_>>();
+        (offsets, bcns.len().to_string())
     }
 
-    fn solve_part2(translations: Self::ProcessedInput) -> String {
-        translations
+    fn solve_part2(offsets: Self::ProcessedInput) -> String {
+        offsets
             .into_iter()
             .tuple_combinations()
-            .map(|(l, r)| l.0.abs_diff(r.0) + l.1.abs_diff(r.1) + l.2.abs_diff(r.2))
+            .map(|(l, r)| l[0].abs_diff(r[0]) + l[1].abs_diff(r[1]) + l[2].abs_diff(r[2]))
             .max()
             .unwrap()
             .to_string()
