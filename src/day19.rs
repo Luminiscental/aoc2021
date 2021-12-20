@@ -2,6 +2,8 @@ use crate::day::Day;
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 
+const THRESHOLD: usize = 12;
+
 type Point = [i16; 3];
 type Conn = [u16; 3];
 type Scan = Vec<Point>;
@@ -25,10 +27,10 @@ fn record_connections(scans: &[Scan]) -> Vec<ScanShape> {
 }
 
 fn try_align(to_shape: &ScanShape, from_shape: &ScanShape) -> Option<(usize, usize, Conn)> {
-    for (f_bcn, f_conns) in from_shape.iter().enumerate().skip(11) {
-        for (t_bcn, t_conns) in to_shape.iter().enumerate().skip(11) {
+    for (f_bcn, f_conns) in from_shape.iter().enumerate() {
+        for (t_bcn, t_conns) in to_shape.iter().enumerate().skip(THRESHOLD - 1) {
             let match_conns = f_conns.keys().copied().filter(|f| t_conns.contains_key(f));
-            if match_conns.clone().count() >= 11 {
+            if match_conns.clone().count() >= THRESHOLD - 1 {
                 let skew = |p: &Conn| 0 != p[0] && p[0] != p[1] && p[1] != p[2];
                 return Some((t_bcn, f_bcn, match_conns.clone().find(skew).unwrap()));
             }
