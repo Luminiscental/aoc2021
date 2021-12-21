@@ -1,6 +1,6 @@
 use crate::day::Day;
-use itertools::Itertools;
 use hashbrown::HashMap;
+use itertools::Itertools;
 
 type Cave = [u8; 2];
 
