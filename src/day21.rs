@@ -1,18 +1,18 @@
 use crate::day::Day;
 use hashbrown::HashMap;
 use itertools::Itertools;
-use std::{fmt::Debug, hash::Hash, ops::AddAssign};
+use std::{hash::Hash, ops::AddAssign};
 
 const DIRAC_ROLL_SUMS: [(u8, u64); 7] = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct State<S: Debug + Copy + Eq + Hash> {
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct State<S: Copy + Eq + Hash> {
     positions: [u8; 2],
     scores: [S; 2],
     player: u8,
 }
 
-fn play<S: Debug + Copy + Eq + Hash + Ord + AddAssign + From<u8>>(
+fn play<S: Copy + Eq + Hash + Ord + AddAssign + From<u8>>(
     roll_sum: u8,
     win: S,
     mut state: State<S>,
@@ -70,8 +70,9 @@ impl<'a> Day<'a> for Day21 {
             scores: [0, 0],
             player: 0,
         };
-        let roll_sums = (0..).map(|n| 9 * n + 5).map(|n| 1 + (n % 10) as u8);
-        for (roll_count, roll_sum) in (3..).step_by(3).zip(roll_sums) {
+        let roll_sums = (6..).step_by(9).map(|n| (n % 10) as u8);
+        let roll_counts = (3..).step_by(3);
+        for (roll_count, roll_sum) in roll_counts.zip(roll_sums) {
             match play(roll_sum, 1000u32, state) {
                 Ok(next_state) => state = next_state,
                 Err(score) => return (positions, (roll_count * score).to_string()),
