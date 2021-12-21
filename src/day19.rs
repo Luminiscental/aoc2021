@@ -50,7 +50,7 @@ fn shape_of(scan: &[Point]) -> ScanCanonicalization {
     shape
 }
 
-fn filter_map_matches<R, F: FnMut(CanonicalPoint, (u8, u8), (u8, u8)) -> Option<R>>(
+fn find_map_matches<R, F: FnMut(CanonicalPoint, (u8, u8), (u8, u8)) -> Option<R>>(
     lhs: &ScanCanonicalization,
     rhs: &ScanCanonicalization,
     mut f: F,
@@ -76,7 +76,7 @@ fn filter_map_matches<R, F: FnMut(CanonicalPoint, (u8, u8), (u8, u8)) -> Option<
 
 fn shapes_match(lhs: &ScanCanonicalization, rhs: &ScanCanonicalization) -> bool {
     let mut matches = 0;
-    filter_map_matches(lhs, rhs, |_, _, _| {
+    find_map_matches(lhs, rhs, |_, _, _| {
         matches += 1;
         (matches == THRESHOLD).then(|| ())
     })
@@ -87,7 +87,7 @@ fn find_skew(
     lhs: &ScanCanonicalization,
     rhs: &ScanCanonicalization,
 ) -> Option<((u8, u8), (u8, u8))> {
-    filter_map_matches(lhs, rhs, |conn, onto_idxs, from_idxs| {
+    find_map_matches(lhs, rhs, |conn, onto_idxs, from_idxs| {
         is_skew(conn).then(|| (onto_idxs, from_idxs))
     })
 }
