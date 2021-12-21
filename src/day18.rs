@@ -1,7 +1,7 @@
 use crate::day::Day;
 use itertools::Itertools;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Pairs(Vec<(u8, u8, u8)>);
 
 impl Pairs {

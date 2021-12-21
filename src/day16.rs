@@ -1,7 +1,6 @@
 use crate::day::Day;
 use itertools::Itertools;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Packet {
     Literal(u8, u64),
     Operator(u8, u8, Vec<Packet>),

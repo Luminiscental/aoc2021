@@ -18,7 +18,6 @@ const WINS: [u32; 10] = [
     0b100001000010000100001,
 ];
 
-#[derive(Debug)]
 pub struct Board {
     rows: [[u32; SIZE]; SIZE],
     marks: u32,
