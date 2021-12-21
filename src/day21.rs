@@ -92,3 +92,25 @@ impl<'a> Day<'a> for Day21 {
         .to_string()
     }
 }
+
+#[cfg(test)]
+mod test_day21 {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        Player 1 starting position: 4
+        Player 2 starting position: 8
+    "};
+
+    #[test]
+    fn test_day21_examples() {
+        let input = Day21::parse(EXAMPLE);
+        let (input, part1) = Day21::solve_part1(input);
+        assert_eq!(part1, "739785");
+        let part2 = Day21::solve_part2(input);
+        assert_eq!(part2, "444356092776315");
+    }
+}
+
+bench_day!(21);
