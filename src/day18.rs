@@ -48,7 +48,7 @@ impl Pairs {
     fn magnitude(&self) -> u32 {
         let pow3 = |i| [1, 3, 9, 27, 81][i as usize];
         let pow2 = |i| [1, 2, 4, 8, 16][i as usize];
-        let magn = |lit: &(_, _, _)| lit.0 as u32 * pow3(lit.1) * pow2(lit.2);
+        let magn = |&(lit, ls, rs)| lit as u32 * pow3(ls) * pow2(rs);
         self.0.iter().map(magn).sum()
     }
 }
