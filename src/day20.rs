@@ -40,35 +40,47 @@ impl Image {
             new_foreground[(x + y * new_size) as usize] =
                 new_background != algorithm[lookup as usize];
         };
+
         convolve(0, 0, subkernel!(0));
-        convolve(0, 1, subkernel!(0, 3));
         convolve(1, 0, subkernel!(0, 1));
-        convolve(0, new_size - 1, subkernel!(6));
-        convolve(0, new_size - 2, subkernel!(6, 3));
-        convolve(1, new_size - 1, subkernel!(6, 7));
-        convolve(new_size - 1, 0, subkernel!(2));
-        convolve(new_size - 1, 1, subkernel!(2, 5));
+        for i in 2..new_size - 2 {
+            convolve(i, 0, subkernel!(0, 1, 2));
+        }
         convolve(new_size - 2, 0, subkernel!(2, 1));
-        convolve(new_size - 1, new_size - 1, subkernel!(8));
-        convolve(new_size - 1, new_size - 2, subkernel!(8, 5));
-        convolve(new_size - 2, new_size - 1, subkernel!(8, 7));
+        convolve(new_size - 1, 0, subkernel!(2));
+        convolve(0, 1, subkernel!(0, 3));
         convolve(1, 1, subkernel!(0, 1, 3, 4));
-        convolve(1, new_size - 2, subkernel!(3, 4, 6, 7));
+        for i in 2..new_size - 2 {
+            convolve(i, 1, subkernel!(0, 1, 2, 3, 4, 5));
+        }
         convolve(new_size - 2, 1, subkernel!(1, 2, 4, 5));
-        convolve(new_size - 2, new_size - 2, subkernel!(4, 5, 7, 8));
+        convolve(new_size - 1, 1, subkernel!(2, 5));
+
         for y in 2..new_size - 2 {
-            convolve(y, 0, subkernel!(0, 1, 2));
-            convolve(y, new_size - 1, subkernel!(6, 7, 8));
             convolve(0, y, subkernel!(0, 3, 6));
-            convolve(new_size - 1, y, subkernel!(2, 5, 8));
-            convolve(y, 1, subkernel!(0, 1, 2, 3, 4, 5));
-            convolve(y, new_size - 2, subkernel!(3, 4, 5, 6, 7, 8));
             convolve(1, y, subkernel!(0, 1, 3, 4, 6, 7));
-            convolve(new_size - 2, y, subkernel!(1, 2, 4, 5, 7, 8));
             for x in 2..new_size - 2 {
                 convolve(x, y, subkernel!(0, 1, 2, 3, 4, 5, 6, 7, 8));
             }
+            convolve(new_size - 2, y, subkernel!(1, 2, 4, 5, 7, 8));
+            convolve(new_size - 1, y, subkernel!(2, 5, 8));
         }
+
+        convolve(0, new_size - 2, subkernel!(6, 3));
+        convolve(1, new_size - 2, subkernel!(3, 4, 6, 7));
+        for i in 2..new_size - 2 {
+            convolve(i, new_size - 2, subkernel!(3, 4, 5, 6, 7, 8));
+        }
+        convolve(new_size - 2, new_size - 2, subkernel!(4, 5, 7, 8));
+        convolve(new_size - 1, new_size - 2, subkernel!(8, 5));
+        convolve(0, new_size - 1, subkernel!(6));
+        convolve(1, new_size - 1, subkernel!(6, 7));
+        for i in 2..new_size - 2 {
+            convolve(i, new_size - 1, subkernel!(6, 7, 8));
+        }
+        convolve(new_size - 2, new_size - 1, subkernel!(8, 7));
+        convolve(new_size - 1, new_size - 1, subkernel!(8));
+
         self.foreground = new_foreground;
         self.background = new_background;
         self.size = new_size;
