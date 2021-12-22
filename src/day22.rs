@@ -1,80 +1,35 @@
 use crate::day::Day;
-use hashbrown::HashSet;
-use itertools::{iproduct, Itertools};
-use std::{array::IntoIter, ops::RangeInclusive};
+use hashbrown::HashMap;
+use itertools::Itertools;
 
-type R = RangeInclusive<i32>;
-type Cuboid = (R, R, R);
+type Interval = (i32, i32); // exclusive
+type Cuboid = (Interval, Interval, Interval);
 
-fn split_up(
-    c: &Cuboid,
-    split: &Cuboid,
-    cs: &mut Vec<Cuboid>,
-    splits: &mut Vec<(bool, Cuboid)>,
-    flag: bool,
-) -> bool {
-    if c.0.start() > split.0.end()
-        || c.0.end() < split.0.start()
-        || c.1.start() > split.1.end()
-        || c.1.end() < split.1.start()
-        || c.2.start() > split.2.end()
-        || c.2.end() < split.2.start()
-    {
-        return false;
-    }
-    let int = |l: R, r: R| -> R {
-        if l.start() < r.start() {
-            if l.end() > r.end() {
-                r
-            } else {
-                *r.start()..=*l.end()
-            }
-        } else if l.end() < r.end() {
-            l
-        } else {
-            *l.start()..=*r.end()
+fn remove(region: Cuboid, from: &mut HashMap<Cuboid, i32>) {
+    let mut new = Vec::new();
+    for (&cuboid, coeff) in from.iter_mut() {
+        match cuboid_intersection(region, cuboid) {
+            Some(x) if x == cuboid => *coeff = i32::MAX,
+            Some(x) => new.push((x, -*coeff)),
+            None => {}
         }
-    };
-    let parts = |i: R, o: R| -> (R, R) { (*o.start()..=*i.start() - 1, i.end() + 1..=*o.end()) };
-    let xint = int(c.0.clone(), split.0.clone());
-    let yint = int(c.1.clone(), split.1.clone());
-    let zint = int(c.2.clone(), split.2.clone());
-    let (x_c0, x_c1) = parts(xint.clone(), c.0.clone());
-    let (y_c0, y_c1) = parts(yint.clone(), c.1.clone());
-    let (z_c0, z_c1) = parts(zint.clone(), c.2.clone());
-    let (x_s0, x_s1) = parts(xint.clone(), split.0.clone());
-    let (y_s0, y_s1) = parts(yint.clone(), split.1.clone());
-    let (z_s0, z_s1) = parts(zint.clone(), split.2.clone());
-    for cc in IntoIter::new([
-        (x_c0, c.1.clone(), c.2.clone()),
-        (x_c1, c.1.clone(), c.2.clone()),
-        (xint.clone(), y_c0, c.2.clone()),
-        (xint.clone(), y_c1, c.2.clone()),
-        (xint.clone(), yint.clone(), z_c0),
-        (xint.clone(), yint.clone(), z_c1),
-    ]) {
-        if cc.0.is_empty() || cc.1.is_empty() || cc.2.is_empty() {
-            continue;
+    }
+    from.retain(|_, &mut v| v != 0 && v != i32::MAX);
+    new.into_iter()
+        .for_each(|(cuboid, coeff)| *from.entry(cuboid).or_insert(0) += coeff);
+}
+
+fn count_after(instructions: impl Iterator<Item = (bool, Cuboid)>) -> i64 {
+    let mut sum = HashMap::new();
+    for (flag, region) in instructions {
+        remove(region, &mut sum);
+        if flag {
+            *sum.entry(region).or_insert(0) += 1;
         }
-        cs.push(cc);
     }
-    for sc in IntoIter::new([
-        (x_s0, split.1.clone(), split.2.clone()),
-        (x_s1, split.1.clone(), split.2.clone()),
-        (xint.clone(), y_s0, split.2.clone()),
-        (xint.clone(), y_s1, split.2.clone()),
-        (xint.clone(), yint.clone(), z_s0),
-        (xint.clone(), yint.clone(), z_s1),
-    ]) {
-        if sc.0.is_empty() || sc.1.is_empty() || sc.2.is_empty() {
-            continue;
-        }
-        splits.push((flag, sc));
-    }
-    if flag {
-        cs.push((xint, yint, zint));
-    }
-    true
+    sum.into_iter()
+        .map(|(cuboid, coeff)| coeff as i64 * volume(cuboid))
+        .sum()
 }
 
 pub struct Day22;
@@ -94,55 +49,45 @@ impl<'a> Day<'a> for Day22 {
                 let (sx, ex) = x[2..].split("..").next_tuple().unwrap();
                 let (sy, ey) = y[2..].split("..").next_tuple().unwrap();
                 let (sz, ez) = z[2..].split("..").next_tuple().unwrap();
-                let xr = sx.parse().unwrap()..=ex.parse().unwrap();
-                let yr = sy.parse().unwrap()..=ey.parse().unwrap();
-                let zr = sz.parse().unwrap()..=ez.parse().unwrap();
+                let xr = (sx.parse().unwrap(), ex.parse::<i32>().unwrap() + 1);
+                let yr = (sy.parse().unwrap(), ey.parse::<i32>().unwrap() + 1);
+                let zr = (sz.parse().unwrap(), ez.parse::<i32>().unwrap() + 1);
                 (flag == "on", (xr, yr, zr))
             })
             .collect()
     }
 
     fn solve_part1(instructions: Self::Input) -> (Self::ProcessedInput, String) {
-        let mut reactor = HashSet::new();
-        let outside = |r: &R| *r.end() < -50 || *r.start() > 50;
-        for (flag, (xr, yr, zr)) in instructions.iter() {
-            if outside(xr) || outside(yr) || outside(zr) {
-                continue;
-            }
-            for (x, y, z) in iproduct!(xr.clone(), yr.clone(), zr.clone()) {
-                if *flag {
-                    reactor.insert((x, y, z));
-                } else {
-                    reactor.remove(&(x, y, z));
-                }
-            }
-        }
-        let mut count = 0;
-        for (x, y, z) in iproduct!(-50..=50, -50..=50, -50..=50) {
-            if reactor.contains(&(x, y, z)) {
-                count += 1;
-            }
-        }
-        (instructions, count.to_string())
+        let init_region = ((-50, 51), (-50, 51), (-50, 51));
+        let ans =
+            count_after(instructions.iter().filter_map(|&(flag, region)| {
+                Some((flag, cuboid_intersection(region, init_region)?))
+            }));
+        (instructions, ans.to_string())
     }
 
-    fn solve_part2(mut instructions: Self::ProcessedInput) -> String {
-        let mut reactor = Vec::<Cuboid>::new();
-        instructions.reverse();
-        'outer: while let Some((flag, cuboid)) = instructions.pop() {
-            for i in 0..reactor.len() {
-                let other = reactor[i].clone();
-                if split_up(&other, &cuboid, &mut reactor, &mut instructions, flag) {
-                    reactor.swap_remove(i);
-                    continue 'outer;
-                }
-            }
-            if flag {
-                reactor.push(cuboid);
-            }
-        }
-        let length = |r: R| (1 + r.end() - r.start()) as u64;
-        let volume = |c: Cuboid| length(c.0) * length(c.1) * length(c.2);
-        reactor.into_iter().map(volume).sum::<u64>().to_string()
+    fn solve_part2(instructions: Self::ProcessedInput) -> String {
+        count_after(instructions.into_iter()).to_string()
     }
+}
+
+fn length(interval: Interval) -> i64 {
+    (interval.1 - interval.0) as i64
+}
+
+fn volume(cuboid: Cuboid) -> i64 {
+    length(cuboid.0) * length(cuboid.1) * length(cuboid.2)
+}
+
+fn interval_intersection(lhs: Interval, rhs: Interval) -> Option<Interval> {
+    let x = (lhs.0.max(rhs.0), lhs.1.min(rhs.1));
+    (x.0 < x.1).then(|| x)
+}
+
+fn cuboid_intersection(lhs: Cuboid, rhs: Cuboid) -> Option<Cuboid> {
+    Some((
+        interval_intersection(lhs.0, rhs.0)?,
+        interval_intersection(lhs.1, rhs.1)?,
+        interval_intersection(lhs.2, rhs.2)?,
+    ))
 }
