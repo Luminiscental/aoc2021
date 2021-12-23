@@ -1,4 +1,5 @@
 #![feature(test)]
+#![feature(iter_intersperse)]
 #![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
 
@@ -98,5 +99,5 @@ macro_rules! declare_main {
 }
 
 declare_main!(
-    01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
+    01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
 );

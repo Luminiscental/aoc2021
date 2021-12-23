@@ -1,10 +1,10 @@
-use hashbrown::HashSet;
+use hashbrown::{HashMap, HashSet};
 use std::{
-    cmp::Ordering,
-    collections::VecDeque,
+    cmp::{Ordering, Reverse},
+    collections::{BinaryHeap, VecDeque},
     hash::Hash,
     iter::{self, Sum},
-    ops::AddAssign,
+    ops::{Add, AddAssign},
     slice::Iter,
 };
 
@@ -198,9 +198,9 @@ pub fn qselect<T: Ord>(k: usize, slice: &mut [T]) -> &T {
     }
 }
 
-pub fn bfs<N, F, G, I>(root: N, adjacents: F, mut visit: G) -> HashSet<N>
+pub fn bfs<N, F, G, I>(root: N, adjacent_gen: F, mut visitor: G) -> HashSet<N>
 where
-    N: Eq + Hash + Copy,
+    N: Copy + Eq + Hash,
     F: Fn(N) -> I,
     I: Iterator<Item = N>,
     G: FnMut(N),
@@ -210,15 +210,44 @@ where
     queue.push_front(root);
     visited.insert(root);
     while let Some(node) = queue.pop_back() {
-        for x in adjacents(node) {
+        for x in adjacent_gen(node) {
             if !visited.contains(&x) {
-                visit(x);
+                visitor(x);
                 queue.push_front(x);
                 visited.insert(x);
             }
         }
     }
     visited
+}
+
+pub fn dijkstra<N, C, F, I, P>(root: N, adjacent_gen: F, goal_pred: P) -> Option<C>
+where
+    N: Copy + Ord + Hash,
+    F: Fn(N) -> I,
+    I: Iterator<Item = (C, N)>,
+    P: Fn(N) -> bool,
+    C: Copy + Ord + Add<Output = C> + Default,
+{
+    let mut queue = BinaryHeap::new();
+    let mut costs = HashMap::new();
+    queue.push((Reverse(C::default()), root));
+    costs.insert(root, C::default());
+    while let Some((Reverse(cost), node)) = queue.pop() {
+        if goal_pred(node) {
+            return Some(cost);
+        } else if costs.get(&node).map_or(false, |c| c < &cost) {
+            continue;
+        }
+        for (delta_cost, adj) in adjacent_gen(node) {
+            let adj_cost = cost + delta_cost;
+            if costs.get(&adj).map_or(true, |c| c > &adj_cost) {
+                costs.insert(adj, adj_cost);
+                queue.push((Reverse(adj_cost), adj));
+            }
+        }
+    }
+    None
 }
 
 pub struct Summation<T>(pub T);
