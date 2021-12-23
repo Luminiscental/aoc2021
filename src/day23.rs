@@ -129,12 +129,11 @@ impl Hall {
             (from - to, 4 * to)
         };
         let mask = (1 << (4 * delta)) - 1;
-        ((self.0 >> base) & mask == 0).then(|| {
-            2 * delta as usize - usize::from(from == 0)
-                + usize::from(to == 0)
-                + usize::from(from == 6)
-                + usize::from(to == 6)
-        })
+        let edge_cases = usize::from(from == 0)
+            + usize::from(to == 0)
+            + usize::from(from == 6)
+            + usize::from(to == 6);
+        ((self.0 >> base) & mask == 0).then(|| 2 * delta as usize - edge_cases)
     }
 }
 
@@ -164,3 +163,27 @@ impl DoorLayer {
         (occ != 0).then(|| occ)
     }
 }
+
+#[cfg(test)]
+mod test_day23 {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        #############
+        #...........#
+        ###B#C#B#D###
+          #A#D#C#A#
+          #########
+    "};
+
+    #[test]
+    fn test_day23_examples() {
+        let input = Day23::parse(EXAMPLE);
+        let (input, part1) = Day23::solve_part1(input);
+        assert_eq!(part1, "12521");
+        assert_eq!(Day23::solve_part2(input), "44169");
+    }
+}
+
+bench_day!(23);
