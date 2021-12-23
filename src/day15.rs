@@ -1,64 +1,48 @@
 use crate::{day::Day, util};
-use std::{cmp::Reverse, collections::BinaryHeap};
-
-fn grid_search<F: Fn((u32, u32)) -> u32>(risk: F, width: u32) -> Option<u32> {
-    let pack = |(x, y)| (x + y * width) as usize;
-    let mut queue = BinaryHeap::new();
-    let mut costs = vec![u32::MAX; (width * width) as usize];
-    queue.push((Reverse(0), (0, 0)));
-    costs[0] = 0;
-    while let Some((Reverse(cost), pos)) = queue.pop() {
-        if pos == (width - 1, width - 1) {
-            return Some(cost);
-        } else if cost > costs[pack(pos)] {
-            continue;
-        }
-        for n in util::grid_neighbours(pos, width, width) {
-            let n_cost = cost + risk(n);
-            if n_cost < costs[pack(n)] {
-                costs[pack(n)] = n_cost;
-                queue.push((Reverse(n_cost), n));
-            }
-        }
-    }
-    None
-}
+use itertools::iproduct;
 
 pub struct Day15;
 
+fn min_risk(width: usize, grid: &[u8]) -> usize {
+    let risk = |(x, y)| grid[x + y * width] as usize;
+    util::dijkstra(
+        (0, 0),
+        |p| util::grid_neighbours(p, width, width).map(|n| (risk(n), n)),
+        |p| p == (width - 1, width - 1),
+    )
+    .unwrap()
+}
+
 impl<'a> Day<'a> for Day15 {
-    type Input = (u32, Vec<u32>);
+    type Input = (usize, Vec<u8>);
     type ProcessedInput = Self::Input;
 
     const DAY: usize = 15;
 
     fn parse(input: &'a str) -> Self::Input {
-        let width = input.lines().next().unwrap().len() as u32;
+        let width = input.lines().next().unwrap().len();
         let grid = input
             .lines()
             .flat_map(|line| line.chars())
-            .map(|c| c.to_digit(10).unwrap())
+            .map(|c| c.to_digit(10).unwrap() as u8)
             .collect();
         (width, grid)
     }
 
     fn solve_part1((width, grid): Self::Input) -> (Self::ProcessedInput, String) {
-        let ans = grid_search(|(x, y)| grid[(x + y * width) as usize], width).unwrap();
+        let ans = min_risk(width, &grid);
         ((width, grid), ans.to_string())
     }
 
     fn solve_part2((width, grid): Self::ProcessedInput) -> String {
-        let new_risk = |x, y| {
-            let base_cost = grid[((x % width) + (y % width) * width) as usize];
-            1 + (x / width + y / width + base_cost - 1) % 9
-        };
-        let width = 5 * width;
-        let grid = (0..width)
-            .flat_map(|y| (0..width).map(move |x| new_risk(x, y)))
-            .collect::<Vec<_>>();
-        grid_search(|(x, y)| grid[(x + y * width) as usize], width)
-            .unwrap()
-            .to_string()
+        min_risk(
+            5 * width,
+            &iproduct!(0..5, 0..width, 0..5, 0..width)
+                .map(|(r, y, c, x)| grid[x + y * width] + r + c)
+                .map(|risk| 1 + (risk - 1) % 9)
+                .collect::<Vec<_>>(),
+        )
+        .to_string()
     }
 }
 

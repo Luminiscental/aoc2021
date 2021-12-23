@@ -54,11 +54,11 @@ impl BitSet {
 }
 
 pub fn grid_neighbours(
-    point: (u32, u32),
-    width: u32,
-    height: u32,
-) -> impl Iterator<Item = (u32, u32)> {
-    [(1, 0), (0, 1), (u32::MAX, 0), (0, u32::MAX)]
+    point: (usize, usize),
+    width: usize,
+    height: usize,
+) -> impl Iterator<Item = (usize, usize)> {
+    [(1, 0), (0, 1), (usize::MAX, 0), (0, usize::MAX)]
         .iter()
         .map(move |delta| (point.0.wrapping_add(delta.0), point.1.wrapping_add(delta.1)))
         .filter(move |&point| point.0 < width && point.1 < height)
