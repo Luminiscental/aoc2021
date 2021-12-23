@@ -1,4 +1,8 @@
-use crate::{day::Day, util};
+use crate::{
+    day::Day,
+    util::{self, CollectArray},
+};
+use itertools::Itertools;
 
 pub struct Day23;
 
@@ -9,9 +13,9 @@ impl<'a> Day<'a> for Day23 {
     const DAY: usize = 23;
 
     fn parse(input: &'a str) -> Self::Input {
-        let char_at = |i| input.chars().nth(i).unwrap();
-        [0, 14]
-            .map(|layer| DoorLayer::from_chars([31, 33, 35, 37].map(|door| char_at(door + layer))))
+        let (outer, inner) = input.lines().skip(2).next_tuple().unwrap();
+        let line_chars = |line: &str| line[3..].chars().step_by(2).take(4).collect_array();
+        [outer, inner].map(line_chars).map(DoorLayer::from_chars)
     }
 
     fn solve_part1(doors: Self::Input) -> (Self::ProcessedInput, String) {
