@@ -1,5 +1,4 @@
 #![feature(test)]
-#![feature(iter_intersperse)]
 #![feature(int_abs_diff)]
 #![feature(type_alias_impl_trait)]
 
