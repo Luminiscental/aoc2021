@@ -4,8 +4,6 @@ use crate::{
 };
 use itertools::Itertools;
 
-// TODO: add a heuristic based on the number of amphipods in the right door
-
 pub struct Day23;
 
 impl<'a> Day<'a> for Day23 {
@@ -25,7 +23,8 @@ impl<'a> Day<'a> for Day23 {
             hall: Hall::default(),
             doors,
         };
-        let ans = util::dijkstra(initial_state, State::iter_moves, State::is_goal).unwrap();
+        let ans = util::dijkstra(initial_state, State::iter_moves, State::is_goal).unwrap()
+            + initial_state.heuristic();
         (doors, ans.to_string())
     }
 
@@ -39,9 +38,9 @@ impl<'a> Day<'a> for Day23 {
                 doors[1],
             ],
         };
-        util::dijkstra(initial_state, State::iter_moves, State::is_goal)
-            .unwrap()
-            .to_string()
+        (util::dijkstra(initial_state, State::iter_moves, State::is_goal).unwrap()
+            + initial_state.heuristic())
+        .to_string()
     }
 }
 
@@ -58,6 +57,20 @@ impl<const DEPTH: usize> State<DEPTH> {
 
     fn is_goal(self) -> bool {
         (0..4).all(|door| (0..DEPTH).all(|layer| self.doors[layer].get(door) == Some(door + 1)))
+    }
+
+    fn heuristic(self) -> usize {
+        1111 * (DEPTH * (DEPTH + 3) / 2)
+            - (0..4)
+                .map(|door| {
+                    let in_place = (0..DEPTH)
+                        .rev()
+                        .take_while(|&layer| self.doors[layer].get(door) == Some(door + 1))
+                        .count();
+                    Self::movement_cost(door + 1)
+                        * (in_place * (DEPTH + 2) - in_place * (in_place + 1) / 2)
+                })
+                .sum::<usize>()
     }
 
     fn try_enter_door(self, index: u8, mover: u8) -> Option<usize> {
@@ -82,7 +95,7 @@ impl<const DEPTH: usize> State<DEPTH> {
             let mut next_state = self;
             next_state.hall.set(h, 0);
             next_state.doors[layer].set(occ - 1, occ);
-            Some((Self::movement_cost(occ) * (dist + layer + 2), next_state))
+            Some((Self::movement_cost(occ) * dist, next_state))
         })
     }
 
@@ -129,17 +142,14 @@ impl Hall {
     }
 
     fn try_move(self, from: u8, to: u8) -> Option<usize> {
-        let (delta, base) = if to > from {
-            (to - from, 4 * (from + 1))
-        } else {
-            (from - to, 4 * to)
-        };
+        let delta = to.abs_diff(from);
+        let shift = 4 * to.min(from + 1);
         let mask = (1 << (4 * delta)) - 1;
         let edge_cases = usize::from(from == 0)
             + usize::from(to == 0)
             + usize::from(from == 6)
             + usize::from(to == 6);
-        ((self.0 >> base) & mask == 0).then(|| 2 * delta as usize - edge_cases)
+        ((self.0 >> shift) & mask == 0).then(|| 2 * delta as usize - edge_cases)
     }
 }
 
