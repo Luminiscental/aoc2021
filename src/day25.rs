@@ -84,3 +84,30 @@ impl<'a> Day<'a> for Day25 {
         "Merry Christmas!".to_string()
     }
 }
+
+#[cfg(test)]
+mod test_day25 {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &str = indoc! {"
+        v...>>.vv>
+        .vv>>.vv..
+        >>.>v>...v
+        >>v>>.>.v.
+        v>v.vv.v..
+        >.>>..v...
+        .vv..>.>v.
+        v.v..>>v.v
+        ....v..v.>
+    "};
+
+    #[test]
+    fn test_day25_examples() {
+        let input = Day25::parse(EXAMPLE);
+        let (_, part1) = Day25::solve_part1(input);
+        assert_eq!(part1, "58");
+    }
+}
+
+bench_day!(25);
