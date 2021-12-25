@@ -4,6 +4,8 @@ use crate::{
 };
 use itertools::Itertools;
 
+// TODO: add a heuristic based on the number of amphipods in the right door
+
 pub struct Day23;
 
 impl<'a> Day<'a> for Day23 {

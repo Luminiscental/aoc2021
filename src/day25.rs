@@ -1,50 +1,55 @@
 use crate::day::Day;
-use itertools::iproduct;
+
+// TODO: 4 tiles can be packed into one u8
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileState {
     East,
     South,
+    Moved,
     Empty,
-    MovedEast,
-    MovedSouth,
-    MovedEmpty,
 }
 
 fn step(width: usize, height: usize, cucumbers: &mut [TileState]) -> bool {
     let mut stepped = false;
-    for (y, x) in iproduct!(0..height, 0..width) {
-        if cucumbers[x + y * width] == TileState::East {
-            let step_x = (x + 1) % width;
-            if cucumbers[step_x + y * width] == TileState::Empty {
-                cucumbers[step_x + y * width] = TileState::MovedEast;
-                cucumbers[x + y * width] = TileState::MovedEmpty;
-                stepped = true;
+    for y in 0..height {
+        let mut x = 0;
+        while x < width {
+            if cucumbers[x + y * width] == TileState::East {
+                let step_x = (x + 1) % width;
+                if cucumbers[step_x + y * width] == TileState::Empty {
+                    cucumbers[step_x + y * width] = TileState::East;
+                    cucumbers[x + y * width] = TileState::Moved;
+                    stepped = true;
+                    x += 1;
+                }
             }
+            x += 1;
         }
     }
     cucumbers
         .iter_mut()
-        .filter(|s| **s == TileState::MovedEmpty)
+        .filter(|s| **s == TileState::Moved)
         .for_each(|s| *s = TileState::Empty);
-    for (y, x) in iproduct!(0..height, 0..width) {
-        if cucumbers[x + y * width] == TileState::South {
-            let step_y = (y + 1) % height;
-            if cucumbers[x + step_y * width] == TileState::Empty {
-                cucumbers[x + step_y * width] = TileState::MovedSouth;
-                cucumbers[x + y * width] = TileState::MovedEmpty;
-                stepped = true;
+    for x in 0..width {
+        let mut y = 0;
+        while y < height {
+            if cucumbers[x + y * width] == TileState::South {
+                let step_y = (y + 1) % height;
+                if cucumbers[x + step_y * width] == TileState::Empty {
+                    cucumbers[x + step_y * width] = TileState::South;
+                    cucumbers[x + y * width] = TileState::Moved;
+                    stepped = true;
+                    y += 1;
+                }
             }
+            y += 1;
         }
     }
-    for s in cucumbers.iter_mut() {
-        match s {
-            TileState::MovedEast => *s = TileState::East,
-            TileState::MovedSouth => *s = TileState::South,
-            TileState::MovedEmpty => *s = TileState::Empty,
-            _ => {}
-        }
-    }
+    cucumbers
+        .iter_mut()
+        .filter(|s| **s == TileState::Moved)
+        .for_each(|s| *s = TileState::Empty);
     stepped
 }
 
